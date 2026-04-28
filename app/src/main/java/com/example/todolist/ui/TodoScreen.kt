@@ -37,7 +37,8 @@ fun TodoScreen(viewModel: TodoViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var showAddDialog by remember { mutableStateOf(false) }
-    var editingTodo by remember { mutableStateOf<TodoEntity?>(null) }
+    var editingTodoId by remember { mutableStateOf<Long?>(null) }
+    var editingTodoTitle by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -63,7 +64,10 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 TodoRow(
                     todo = todo,
                     onToggle = { viewModel.toggleTodo(todo) },
-                    onEdit = { editingTodo = todo },
+                    onEdit = {
+                        editingTodoId = todo.id
+                        editingTodoTitle = todo.title
+                    },
                     onDelete = { viewModel.deleteTodo(todo) }
                 )
             }
@@ -82,16 +86,20 @@ fun TodoScreen(viewModel: TodoViewModel) {
         )
     }
 
-    editingTodo?.let { todo ->
+    editingTodoId?.let { todoId ->
         TodoEditDialog(
             title = "할 일 수정",
-            initialValue = todo.title,
-            onDismiss = { editingTodo = null },
+            initialValue = editingTodoTitle,
+            onDismiss = {
+                editingTodoId = null
+                editingTodoTitle = ""
+            },
             onConfirm = { newTitle ->
                 if (newTitle.isNotBlank()) {
-                    viewModel.updateTodo(todo.copy(title = newTitle.trim()))
+                    viewModel.updateTodoTitle(todoId = todoId, newTitle = newTitle)
                 }
-                editingTodo = null
+                editingTodoId = null
+                editingTodoTitle = ""
             }
         )
     }
