@@ -517,10 +517,18 @@ private fun TodoRow(
     onDelete: () -> Unit
 ) {
     val contentAlpha = if (todo.isCompleted) 0.5f else 1f
+    val isOverdue = !todo.isCompleted && todo.scheduledDate < todayStartOfDayMillis()
+    val overdueColor = Color(0xFFB71C1C)
+    val cardContainerColor = if (isOverdue) {
+        Color(0xFFFFF3F3)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = cardContainerColor)
     ) {
         Row(
             modifier = Modifier
@@ -539,6 +547,13 @@ private fun TodoRow(
                     .clickable { onViewDetail() }
                     .padding(vertical = 4.dp)
             ) {
+                if (isOverdue) {
+                    Text(
+                        text = "지난 일정",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = overdueColor.copy(alpha = 0.8f)
+                    )
+                }
                 Text(
                     text = todo.title,
                     style = MaterialTheme.typography.bodyLarge,
