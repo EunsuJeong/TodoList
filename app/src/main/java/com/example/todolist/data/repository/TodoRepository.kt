@@ -16,6 +16,11 @@ class TodoRepository(private val todoDao: TodoDao) {
         todoDao.updateTodo(todo)
     }
 
+    suspend fun updateTodoTitle(todoId: Long, newTitle: String) {
+        if (newTitle.isBlank()) return
+        todoDao.updateTodoTitle(todoId = todoId, newTitle = newTitle.trim())
+    }
+
     suspend fun toggleTodo(todo: TodoEntity) {
         todoDao.updateTodo(todo.copy(isCompleted = !todo.isCompleted))
     }
