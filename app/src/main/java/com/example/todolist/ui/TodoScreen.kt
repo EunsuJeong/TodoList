@@ -73,6 +73,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTodoId by remember { mutableStateOf<Long?>(null) }
     var editingTodoTitle by remember { mutableStateOf("") }
+    var editingTodoMemo by remember { mutableStateOf("") }
     var editingTodoScheduledDate by remember { mutableStateOf(todayStartOfDayMillis()) }
 
     Scaffold(
@@ -269,6 +270,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
                             onEdit = {
                                 editingTodoId = todo.id
                                 editingTodoTitle = todo.title
+                                editingTodoMemo = todo.memo ?: ""
                                 editingTodoScheduledDate = todo.scheduledDate
                             },
                             onDelete = { viewModel.deleteTodo(todo) }
@@ -283,9 +285,10 @@ fun TodoScreen(viewModel: TodoViewModel) {
         TodoEditDialog(
             title = "할 일 추가",
             initialValue = "",
+            initialMemo = "",
             onDismiss = { showAddDialog = false },
-            onConfirm = {
-                viewModel.addTodo(it)
+            onConfirm = { newTitle, newMemo ->
+                viewModel.addTodo(newTitle, newMemo.trim().ifEmpty { null })
                 showAddDialog = false
             }
         )
@@ -295,22 +298,26 @@ fun TodoScreen(viewModel: TodoViewModel) {
         TodoUpdateDialog(
             title = "할 일 수정",
             initialValue = editingTodoTitle,
+            initialMemo = editingTodoMemo,
             initialScheduledDate = editingTodoScheduledDate,
             onDismiss = {
                 editingTodoId = null
                 editingTodoTitle = ""
+                editingTodoMemo = ""
                 editingTodoScheduledDate = todayStartOfDayMillis()
             },
-            onConfirm = { newTitle, newScheduledDate ->
+            onConfirm = { newTitle, newScheduledDate, newMemo ->
                 if (newTitle.isNotBlank()) {
                     viewModel.updateTodoDetails(
                         todoId = todoId,
                         newTitle = newTitle,
-                        scheduledDate = newScheduledDate
+                        scheduledDate = newScheduledDate,
+                        memo = newMemo.trim().ifEmpty { null }
                     )
                 }
                 editingTodoId = null
                 editingTodoTitle = ""
+                editingTodoMemo = ""
                 editingTodoScheduledDate = todayStartOfDayMillis()
             }
         )
@@ -496,12 +503,21 @@ private fun TodoRow(
             checked = todo.isCompleted,
             onCheckedChange = { onToggle() }
         )
-        Text(
-            text = todo.title,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = todo.title,
+                style = MaterialTheme.typography.bodyLarge,
+                textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+            )
+            if (!todo.memo.isNullOrEmpty()) {
+                Text(
+                    text = todo.memo,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                )
+            }
+        }
         TextButton(onClick = onEdit) {
             Text("수정")
         }
@@ -515,16 +531,18 @@ private fun TodoRow(
 private fun TodoEditDialog(
     title: String,
     initialValue: String,
+    initialMemo: String,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: (String, String) -> Unit
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
+    var memo by remember(initialMemo) { mutableStateOf(initialMemo) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
@@ -532,11 +550,19 @@ private fun TodoEditDialog(
                     singleLine = true,
                     label = { Text("할 일") }
                 )
+                OutlinedTextField(
+                    value = memo,
+                    onValueChange = { memo = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("메모 (선택)") },
+                    minLines = 2,
+                    maxLines = 4
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text) },
+                onClick = { onConfirm(text, memo) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")
@@ -554,11 +580,13 @@ private fun TodoEditDialog(
 private fun TodoUpdateDialog(
     title: String,
     initialValue: String,
+    initialMemo: String,
     initialScheduledDate: Long,
     onDismiss: () -> Unit,
-    onConfirm: (String, Long) -> Unit
+    onConfirm: (String, Long, String) -> Unit
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
+    var memo by remember(initialMemo) { mutableStateOf(initialMemo) }
     var scheduledDate by remember(initialScheduledDate) { mutableStateOf(initialScheduledDate) }
 
     AlertDialog(
@@ -572,6 +600,14 @@ private fun TodoUpdateDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     label = { Text("할 일") }
+                )
+                OutlinedTextField(
+                    value = memo,
+                    onValueChange = { memo = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("메모 (선택)") },
+                    minLines = 2,
+                    maxLines = 4
                 )
                 Text(
                     text = "예정일 ${formatDate(scheduledDate)}",
@@ -604,7 +640,7 @@ private fun TodoUpdateDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text, scheduledDate) },
+                onClick = { onConfirm(text, scheduledDate, memo) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")

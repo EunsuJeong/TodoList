@@ -12,5 +12,6 @@ data class TodoEntity(
     val isCompleted: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val scheduledDate: Long = todayStartOfDayMillis()
+    val scheduledDate: Long = todayStartOfDayMillis(),
+    val memo: String? = null
 )

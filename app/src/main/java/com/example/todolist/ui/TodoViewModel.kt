@@ -86,7 +86,10 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         val searchFiltered = if (trimmed.isEmpty()) {
             base.statusFilteredTodos
         } else {
-            base.statusFilteredTodos.filter { it.title.contains(trimmed, ignoreCase = true) }
+            base.statusFilteredTodos.filter {
+                it.title.contains(trimmed, ignoreCase = true) ||
+                    it.memo?.contains(trimmed, ignoreCase = true) == true
+            }
         }
         val sortedTodos = when (base.selectedSort) {
             TodoSort.CREATED_DESC -> searchFiltered.sortedByDescending { it.createdAt }
@@ -161,9 +164,9 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         updateSelectedDate(todayStartOfDayMillis())
     }
 
-    fun addTodo(title: String) {
+    fun addTodo(title: String, memo: String? = null) {
         viewModelScope.launch {
-            repository.addTodo(title, _selectedDate.value)
+            repository.addTodo(title, _selectedDate.value, memo)
         }
     }
 
@@ -185,12 +188,13 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         }
     }
 
-    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long) {
+    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null) {
         viewModelScope.launch {
             repository.updateTodoDetails(
                 todoId = todoId,
                 newTitle = newTitle,
-                scheduledDate = scheduledDate
+                scheduledDate = scheduledDate,
+                memo = memo
             )
         }
     }
