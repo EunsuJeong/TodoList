@@ -34,12 +34,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.data.local.TodoEntity
 import com.example.todolist.data.local.dateMillisOfMonthDay
@@ -59,6 +62,9 @@ private fun formatMonth(millis: Long): String =
     SimpleDateFormat("yyyy년 M월", Locale.getDefault()).format(Date(millis))
 
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
+
+private val sundayColor = Color(0xFFD32F2F)   // 부드러운 빨강
+private val saturdayColor = Color(0xFF1565C0)  // 부드러운 파랑
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,12 +91,6 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Text(
-                text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,7 +113,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 OutlinedButton(onClick = { viewModel.goToToday() }) {
@@ -126,14 +126,29 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 selectedDate = uiState.selectedDate,
                 datesWithTodos = uiState.datesWithTodos,
                 onDateSelected = viewModel::setSelectedDate,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            Text(
-                text = "선택 날짜 ${formatDate(uiState.selectedDate)}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+            HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = formatDate(uiState.selectedDate),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Row(
                 modifier = Modifier
@@ -283,9 +298,14 @@ private fun MonthlyCalendar(
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            dayLabels.forEach { label ->
+            dayLabels.forEachIndexed { idx, label ->
+                val labelColor = when (idx) {
+                    0 -> sundayColor
+                    6 -> saturdayColor
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
@@ -293,27 +313,29 @@ private fun MonthlyCalendar(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = labelColor
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.size(8.dp))
+        Spacer(modifier = Modifier.size(6.dp))
 
         for (weekStart in 0 until totalCells step 7) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 for (index in weekStart until weekStart + 7) {
                     val dayNumber = index - offset + 1
+                    val columnIndex = index % 7
                     if (dayNumber in 1..totalDays) {
                         val dateMillis = dateMillisOfMonthDay(visibleMonth, dayNumber)
                         CalendarDayCell(
                             dayNumber = dayNumber,
+                            columnIndex = columnIndex,
                             isSelected = dateMillis == selectedDate,
                             isToday = dateMillis == today,
                             hasTodos = datesWithTodos.contains(dateMillis),
@@ -336,29 +358,39 @@ private fun MonthlyCalendar(
 @Composable
 private fun CalendarDayCell(
     dayNumber: Int,
+    columnIndex: Int,
     isSelected: Boolean,
     isToday: Boolean,
     hasTodos: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 배경: 선택 날짜
     val backgroundColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
         Color.Transparent
     }
-    val borderColor = if (isToday) {
+    // 테두리: 오늘이면서 선택되지 않은 경우만 표시
+    val borderColor = if (isToday && !isSelected) {
         MaterialTheme.colorScheme.primary
     } else {
         Color.Transparent
     }
+    // 텍스트 색상: 선택 > 주말 > 기본 순
+    val baseTextColor = when (columnIndex) {
+        0 -> sundayColor
+        6 -> saturdayColor
+        else -> MaterialTheme.colorScheme.onSurface
+    }
     val textColor = if (isSelected) {
         MaterialTheme.colorScheme.onPrimaryContainer
     } else {
-        MaterialTheme.colorScheme.onSurface
+        baseTextColor
     }
+    // 점 색상
     val dotColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
     } else {
         MaterialTheme.colorScheme.primary
     }
@@ -366,11 +398,10 @@ private fun CalendarDayCell(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(backgroundColor)
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
+            .border(width = 1.5.dp, color = borderColor, shape = RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -380,12 +411,14 @@ private fun CalendarDayCell(
             Text(
                 text = dayNumber.toString(),
                 color = textColor,
-                style = MaterialTheme.typography.bodyMedium
+                fontSize = 13.sp,
+                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                lineHeight = 16.sp
             )
-            Spacer(modifier = Modifier.size(4.dp))
+            Spacer(modifier = Modifier.size(2.dp))
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(5.dp)
                     .clip(CircleShape)
                     .background(if (hasTodos) dotColor else Color.Transparent)
             )
