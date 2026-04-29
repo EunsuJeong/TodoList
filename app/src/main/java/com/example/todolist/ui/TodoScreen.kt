@@ -150,6 +150,37 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 )
             }
 
+            // 검색어 입력창
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = { viewModel.setSearchQuery(it) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    label = { Text("할 일 검색") },
+                    placeholder = { Text("제목 검색") }
+                )
+                if (uiState.searchQuery.isNotEmpty()) {
+                    TextButton(onClick = { viewModel.clearSearchQuery() }) {
+                        Text("✕")
+                    }
+                }
+            }
+
+            if (uiState.searchQuery.trim().isNotEmpty()) {
+                Text(
+                    text = "검색 결과 ${uiState.searchResultCount}개",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -210,10 +241,14 @@ fun TodoScreen(viewModel: TodoViewModel) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = when (uiState.selectedFilter) {
-                            TodoFilter.ALL -> "이 날짜에 등록된 할 일이 없습니다."
-                            TodoFilter.ACTIVE -> "이 날짜에 진행중인 할 일이 없습니다."
-                            TodoFilter.COMPLETED -> "이 날짜에 완료된 할 일이 없습니다."
+                        text = if (uiState.searchQuery.trim().isNotEmpty()) {
+                            "검색 결과가 없습니다."
+                        } else {
+                            when (uiState.selectedFilter) {
+                                TodoFilter.ALL -> "이 날짜에 등록된 할 일이 없습니다."
+                                TodoFilter.ACTIVE -> "이 날짜에 진행중인 할 일이 없습니다."
+                                TodoFilter.COMPLETED -> "이 날짜에 완료된 할 일이 없습니다."
+                            }
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
