@@ -5,24 +5,54 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.local.TodoEntity
 import com.example.todolist.data.repository.TodoRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+enum class TodoFilter {
+    ALL,
+    ACTIVE,
+    COMPLETED
+}
+
 data class TodoUiState(
-    val todos: List<TodoEntity> = emptyList()
+    val todos: List<TodoEntity> = emptyList(),
+    val selectedFilter: TodoFilter = TodoFilter.ALL,
+    val totalCount: Int = 0,
+    val activeCount: Int = 0,
+    val completedCount: Int = 0
 )
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
-    val uiState: StateFlow<TodoUiState> = repository.todos
-        .map { TodoUiState(todos = it) }
+    private val selectedFilter = MutableStateFlow(TodoFilter.ALL)
+
+    val uiState: StateFlow<TodoUiState> = combine(repository.todos, selectedFilter) { todos, filter ->
+        val filteredTodos = when (filter) {
+            TodoFilter.ALL -> todos
+            TodoFilter.ACTIVE -> todos.filter { !it.isCompleted }
+            TodoFilter.COMPLETED -> todos.filter { it.isCompleted }
+        }
+
+        TodoUiState(
+            todos = filteredTodos,
+            selectedFilter = filter,
+            totalCount = todos.size,
+            activeCount = todos.count { !it.isCompleted },
+            completedCount = todos.count { it.isCompleted }
+        )
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = TodoUiState()
         )
+
+    fun setFilter(filter: TodoFilter) {
+        selectedFilter.value = filter
+    }
 
     fun addTodo(title: String) {
         viewModelScope.launch {

@@ -14,6 +14,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,26 +51,59 @@ fun TodoScreen(viewModel: TodoViewModel) {
             }
         }
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(
-                items = uiState.todos,
-                key = { it.id }
-            ) { todo ->
-                TodoRow(
-                    todo = todo,
-                    onToggle = { viewModel.toggleTodo(todo) },
-                    onEdit = {
-                        editingTodoId = todo.id
-                        editingTodoTitle = todo.title
-                    },
-                    onDelete = { viewModel.deleteTodo(todo) }
+            Text(
+                text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TodoFilterButton(
+                    text = "전체",
+                    selected = uiState.selectedFilter == TodoFilter.ALL,
+                    onClick = { viewModel.setFilter(TodoFilter.ALL) }
                 )
+                TodoFilterButton(
+                    text = "진행중",
+                    selected = uiState.selectedFilter == TodoFilter.ACTIVE,
+                    onClick = { viewModel.setFilter(TodoFilter.ACTIVE) }
+                )
+                TodoFilterButton(
+                    text = "완료",
+                    selected = uiState.selectedFilter == TodoFilter.COMPLETED,
+                    onClick = { viewModel.setFilter(TodoFilter.COMPLETED) }
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = uiState.todos,
+                    key = { it.id }
+                ) { todo ->
+                    TodoRow(
+                        todo = todo,
+                        onToggle = { viewModel.toggleTodo(todo) },
+                        onEdit = {
+                            editingTodoId = todo.id
+                            editingTodoTitle = todo.title
+                        },
+                        onDelete = { viewModel.deleteTodo(todo) }
+                    )
+                }
             }
         }
     }
@@ -102,6 +136,23 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 editingTodoTitle = ""
             }
         )
+    }
+}
+
+@Composable
+private fun TodoFilterButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    if (selected) {
+        Button(onClick = onClick) {
+            Text(text)
+        }
+    } else {
+        OutlinedButton(onClick = onClick) {
+            Text(text)
+        }
     }
 }
 
