@@ -148,6 +148,16 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         }
     }
 
+    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long) {
+        viewModelScope.launch {
+            repository.updateTodoDetails(
+                todoId = todoId,
+                newTitle = newTitle,
+                scheduledDate = scheduledDate
+            )
+        }
+    }
+
     fun deleteTodo(todo: TodoEntity) {
         viewModelScope.launch {
             repository.deleteTodo(todo)
