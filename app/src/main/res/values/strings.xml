@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calendar_accessibility_today">오늘</string>
+    <string name="calendar_accessibility_selected">선택됨</string>
+    <string name="calendar_accessibility_has_todo">할 일 있음</string>
+    <string name="calendar_accessibility_has_overdue">지난 일정 있음</string>
+</resources>

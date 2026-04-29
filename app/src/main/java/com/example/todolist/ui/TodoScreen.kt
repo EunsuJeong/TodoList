@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -50,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.todolist.R
 import com.example.todolist.data.local.TodoEntity
 import com.example.todolist.data.local.dateMillisOfMonthDay
 import com.example.todolist.data.local.dayOfWeekOffsetOfMonthStart
@@ -472,14 +474,18 @@ private fun CalendarDayCell(
     } else {
         defaultDotColor
     }
+    val todayLabel = stringResource(id = R.string.calendar_accessibility_today)
+    val selectedLabel = stringResource(id = R.string.calendar_accessibility_selected)
+    val hasTodoLabel = stringResource(id = R.string.calendar_accessibility_has_todo)
+    val hasOverdueLabel = stringResource(id = R.string.calendar_accessibility_has_overdue)
     val dateText = formatCalendarA11yDate(dateMillis)
     val statusParts = mutableListOf<String>()
-    if (isToday) statusParts.add("오늘")
-    if (isSelected) statusParts.add("선택됨")
+    if (isToday) statusParts.add(todayLabel)
+    if (isSelected) statusParts.add(selectedLabel)
     if (hasOverdueTodo) {
-        statusParts.add("지난 일정 있음")
+        statusParts.add(hasOverdueLabel)
     } else if (hasTodos) {
-        statusParts.add("할 일 있음")
+        statusParts.add(hasTodoLabel)
     }
     val cellContentDescription = if (statusParts.isEmpty()) {
         dateText
