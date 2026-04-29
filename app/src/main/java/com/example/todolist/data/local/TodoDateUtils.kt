@@ -13,3 +13,17 @@ fun normalizeToStartOfDayMillis(timestamp: Long): Long {
 }
 
 fun todayStartOfDayMillis(): Long = normalizeToStartOfDayMillis(System.currentTimeMillis())
+
+fun previousDayMillis(date: Long): Long {
+    val cal = Calendar.getInstance()
+    cal.timeInMillis = date
+    cal.add(Calendar.DAY_OF_MONTH, -1)
+    return normalizeToStartOfDayMillis(cal.timeInMillis)
+}
+
+fun nextDayMillis(date: Long): Long {
+    val cal = Calendar.getInstance()
+    cal.timeInMillis = date
+    cal.add(Calendar.DAY_OF_MONTH, 1)
+    return normalizeToStartOfDayMillis(cal.timeInMillis)
+}

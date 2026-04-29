@@ -25,6 +25,9 @@ interface TodoDao {
     @Query("DELETE FROM todos WHERE isCompleted = 1")
     suspend fun clearCompletedTodos()
 
+    @Query("DELETE FROM todos WHERE isCompleted = 1 AND scheduledDate = :date")
+    suspend fun clearCompletedTodosForDate(date: Long)
+
     @Delete
     suspend fun deleteTodo(todo: TodoEntity)
 }

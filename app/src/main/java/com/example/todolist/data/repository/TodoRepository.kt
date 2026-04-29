@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 class TodoRepository(private val todoDao: TodoDao) {
     val todos: Flow<List<TodoEntity>> = todoDao.getAllTodos()
 
-    suspend fun addTodo(title: String) {
+    suspend fun addTodo(title: String, scheduledDate: Long = todayStartOfDayMillis()) {
         if (title.isBlank()) return
         val now = System.currentTimeMillis()
         todoDao.insertTodo(
@@ -16,7 +16,7 @@ class TodoRepository(private val todoDao: TodoDao) {
                 title = title.trim(),
                 createdAt = now,
                 updatedAt = now,
-                scheduledDate = todayStartOfDayMillis()
+                scheduledDate = scheduledDate
             )
         )
     }
@@ -49,5 +49,9 @@ class TodoRepository(private val todoDao: TodoDao) {
 
     suspend fun clearCompletedTodos() {
         todoDao.clearCompletedTodos()
+    }
+
+    suspend fun clearCompletedTodosForDate(date: Long) {
+        todoDao.clearCompletedTodosForDate(date)
     }
 }
