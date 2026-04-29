@@ -70,9 +70,6 @@ private fun formatMonth(millis: Long): String =
 
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
-private val sundayColor = Color(0xFFD32F2F)   // 부드러운 빨강
-private val saturdayColor = Color(0xFF1565C0)  // 부드러운 파랑
-
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TodoScreen(viewModel: TodoViewModel) {
@@ -367,8 +364,8 @@ private fun MonthlyCalendar(
         ) {
             dayLabels.forEachIndexed { idx, label ->
                 val labelColor = when (idx) {
-                    0 -> sundayColor
-                    6 -> saturdayColor
+                    0 -> MaterialTheme.colorScheme.error
+                    6 -> MaterialTheme.colorScheme.primary
                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
                 Box(
@@ -444,8 +441,8 @@ private fun CalendarDayCell(
     }
     // 텍스트 색상: 선택 > 주말 > 기본 순
     val baseTextColor = when (columnIndex) {
-        0 -> sundayColor
-        6 -> saturdayColor
+        0 -> MaterialTheme.colorScheme.error
+        6 -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurface
     }
     val textColor = if (isSelected) {
@@ -518,9 +515,9 @@ private fun TodoRow(
 ) {
     val contentAlpha = if (todo.isCompleted) 0.5f else 1f
     val isOverdue = !todo.isCompleted && todo.scheduledDate < todayStartOfDayMillis()
-    val overdueColor = Color(0xFFB71C1C)
+    val overdueColor = MaterialTheme.colorScheme.error
     val cardContainerColor = if (isOverdue) {
-        Color(0xFFFFF3F3)
+        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
     } else {
         MaterialTheme.colorScheme.surface
     }
