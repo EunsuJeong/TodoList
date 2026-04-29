@@ -45,6 +45,8 @@ import com.example.todolist.data.local.TodoEntity
 import com.example.todolist.data.local.dateMillisOfMonthDay
 import com.example.todolist.data.local.dayOfWeekOffsetOfMonthStart
 import com.example.todolist.data.local.daysInMonth
+import com.example.todolist.data.local.nextDayMillis
+import com.example.todolist.data.local.previousDayMillis
 import com.example.todolist.data.local.todayStartOfDayMillis
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -65,6 +67,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTodoId by remember { mutableStateOf<Long?>(null) }
     var editingTodoTitle by remember { mutableStateOf("") }
+    var editingTodoScheduledDate by remember { mutableStateOf(todayStartOfDayMillis()) }
 
     Scaffold(
         topBar = {
@@ -216,6 +219,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
                             onEdit = {
                                 editingTodoId = todo.id
                                 editingTodoTitle = todo.title
+                                editingTodoScheduledDate = todo.scheduledDate
                             },
                             onDelete = { viewModel.deleteTodo(todo) }
                         )
@@ -238,19 +242,26 @@ fun TodoScreen(viewModel: TodoViewModel) {
     }
 
     editingTodoId?.let { todoId ->
-        TodoEditDialog(
+        TodoUpdateDialog(
             title = "할 일 수정",
             initialValue = editingTodoTitle,
+            initialScheduledDate = editingTodoScheduledDate,
             onDismiss = {
                 editingTodoId = null
                 editingTodoTitle = ""
+                editingTodoScheduledDate = todayStartOfDayMillis()
             },
-            onConfirm = { newTitle ->
+            onConfirm = { newTitle, newScheduledDate ->
                 if (newTitle.isNotBlank()) {
-                    viewModel.updateTodoTitle(todoId = todoId, newTitle = newTitle)
+                    viewModel.updateTodoDetails(
+                        todoId = todoId,
+                        newTitle = newTitle,
+                        scheduledDate = newScheduledDate
+                    )
                 }
                 editingTodoId = null
                 editingTodoTitle = ""
+                editingTodoScheduledDate = todayStartOfDayMillis()
             }
         )
     }
@@ -458,6 +469,74 @@ private fun TodoEditDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(text) },
+                enabled = text.isNotBlank()
+            ) {
+                Text("저장")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
+}
+
+@Composable
+private fun TodoUpdateDialog(
+    title: String,
+    initialValue: String,
+    initialScheduledDate: Long,
+    onDismiss: () -> Unit,
+    onConfirm: (String, Long) -> Unit
+) {
+    var text by remember(initialValue) { mutableStateOf(initialValue) }
+    var scheduledDate by remember(initialScheduledDate) { mutableStateOf(initialScheduledDate) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("할 일") }
+                )
+                Text(
+                    text = "예정일 ${formatDate(scheduledDate)}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { scheduledDate = previousDayMillis(scheduledDate) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("이전날")
+                    }
+                    OutlinedButton(
+                        onClick = { scheduledDate = todayStartOfDayMillis() },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("오늘")
+                    }
+                    OutlinedButton(
+                        onClick = { scheduledDate = nextDayMillis(scheduledDate) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("다음날")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(text, scheduledDate) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")
