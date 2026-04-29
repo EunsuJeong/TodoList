@@ -86,6 +86,29 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 )
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TodoFilterButton(
+                    text = "최신순",
+                    selected = uiState.selectedSort == TodoSort.CREATED_DESC,
+                    onClick = { viewModel.setSort(TodoSort.CREATED_DESC) }
+                )
+                TodoFilterButton(
+                    text = "오래된순",
+                    selected = uiState.selectedSort == TodoSort.CREATED_ASC,
+                    onClick = { viewModel.setSort(TodoSort.CREATED_ASC) }
+                )
+                TodoFilterButton(
+                    text = "수정순",
+                    selected = uiState.selectedSort == TodoSort.UPDATED_DESC,
+                    onClick = { viewModel.setSort(TodoSort.UPDATED_DESC) }
+                )
+            }
+
             Button(
                 onClick = { viewModel.clearCompletedTodos() },
                 enabled = uiState.completedCount > 0,

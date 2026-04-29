@@ -18,9 +18,16 @@ enum class TodoFilter {
     COMPLETED
 }
 
+enum class TodoSort {
+    CREATED_DESC,
+    CREATED_ASC,
+    UPDATED_DESC
+}
+
 data class TodoUiState(
     val todos: List<TodoEntity> = emptyList(),
     val selectedFilter: TodoFilter = TodoFilter.ALL,
+    val selectedSort: TodoSort = TodoSort.CREATED_DESC,
     val totalCount: Int = 0,
     val activeCount: Int = 0,
     val completedCount: Int = 0
@@ -28,17 +35,25 @@ data class TodoUiState(
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
     private val selectedFilter = MutableStateFlow(TodoFilter.ALL)
+    private val selectedSort = MutableStateFlow(TodoSort.CREATED_DESC)
 
-    val uiState: StateFlow<TodoUiState> = combine(repository.todos, selectedFilter) { todos, filter ->
+    val uiState: StateFlow<TodoUiState> = combine(repository.todos, selectedFilter, selectedSort) { todos, filter, sort ->
         val filteredTodos = when (filter) {
             TodoFilter.ALL -> todos
             TodoFilter.ACTIVE -> todos.filter { !it.isCompleted }
             TodoFilter.COMPLETED -> todos.filter { it.isCompleted }
         }
 
+        val sortedTodos = when (sort) {
+            TodoSort.CREATED_DESC -> filteredTodos.sortedByDescending { it.createdAt }
+            TodoSort.CREATED_ASC -> filteredTodos.sortedBy { it.createdAt }
+            TodoSort.UPDATED_DESC -> filteredTodos.sortedByDescending { it.updatedAt }
+        }
+
         TodoUiState(
-            todos = filteredTodos,
+            todos = sortedTodos,
             selectedFilter = filter,
+            selectedSort = sort,
             totalCount = todos.size,
             activeCount = todos.count { !it.isCompleted },
             completedCount = todos.count { it.isCompleted }
@@ -52,6 +67,10 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
 
     fun setFilter(filter: TodoFilter) {
         selectedFilter.value = filter
+    }
+
+    fun setSort(sort: TodoSort) {
+        selectedSort.value = sort
     }
 
     fun addTodo(title: String) {
