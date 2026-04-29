@@ -1,12 +1,18 @@
 package com.example.todolist.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -26,12 +32,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.data.local.TodoEntity
+import com.example.todolist.data.local.dateMillisOfMonthDay
+import com.example.todolist.data.local.dayOfWeekOffsetOfMonthStart
+import com.example.todolist.data.local.daysInMonth
+import com.example.todolist.data.local.todayStartOfDayMillis
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,10 +53,15 @@ import java.util.Locale
 private fun formatDate(millis: Long): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TodoScreen(viewModel: TodoViewModel) {    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+private fun formatMonth(millis: Long): String =
+    SimpleDateFormat("yyyy년 M월", Locale.getDefault()).format(Date(millis))
 
+private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun TodoScreen(viewModel: TodoViewModel) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTodoId by remember { mutableStateOf<Long?>(null) }
     var editingTodoTitle by remember { mutableStateOf("") }
@@ -69,25 +88,25 @@ fun TodoScreen(viewModel: TodoViewModel) {    val uiState by viewModel.uiState.c
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // 날짜 네비게이션
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 4.dp),
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = { viewModel.goToPreviousDay() }) {
-                    Text("◀ 이전")
+                TextButton(onClick = { viewModel.goToPreviousMonth() }) {
+                    Text("◀")
                 }
                 Text(
-                    text = formatDate(uiState.selectedDate),
+                    text = formatMonth(uiState.visibleMonth),
                     style = MaterialTheme.typography.titleMedium
                 )
-                TextButton(onClick = { viewModel.goToNextDay() }) {
-                    Text("다음 ▶")
+                TextButton(onClick = { viewModel.goToNextMonth() }) {
+                    Text("▶")
                 }
             }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,6 +117,20 @@ fun TodoScreen(viewModel: TodoViewModel) {    val uiState by viewModel.uiState.c
                     Text("오늘")
                 }
             }
+
+            MonthlyCalendar(
+                visibleMonth = uiState.visibleMonth,
+                selectedDate = uiState.selectedDate,
+                datesWithTodos = uiState.datesWithTodos,
+                onDateSelected = viewModel::setSelectedDate,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = "선택 날짜 ${formatDate(uiState.selectedDate)}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
 
             Row(
                 modifier = Modifier
@@ -220,6 +253,132 @@ fun TodoScreen(viewModel: TodoViewModel) {    val uiState by viewModel.uiState.c
                 editingTodoTitle = ""
             }
         )
+    }
+}
+
+@Composable
+private fun MonthlyCalendar(
+    visibleMonth: Long,
+    selectedDate: Long,
+    datesWithTodos: Set<Long>,
+    onDateSelected: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val today = todayStartOfDayMillis()
+    val offset = dayOfWeekOffsetOfMonthStart(visibleMonth)
+    val totalDays = daysInMonth(visibleMonth)
+    val totalCells = ((offset + totalDays + 6) / 7) * 7
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            dayLabels.forEach { label ->
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.size(8.dp))
+
+        for (weekStart in 0 until totalCells step 7) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                for (index in weekStart until weekStart + 7) {
+                    val dayNumber = index - offset + 1
+                    if (dayNumber in 1..totalDays) {
+                        val dateMillis = dateMillisOfMonthDay(visibleMonth, dayNumber)
+                        CalendarDayCell(
+                            dayNumber = dayNumber,
+                            isSelected = dateMillis == selectedDate,
+                            isToday = dateMillis == today,
+                            hasTodos = datesWithTodos.contains(dateMillis),
+                            onClick = { onDateSelected(dateMillis) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        Spacer(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarDayCell(
+    dayNumber: Int,
+    isSelected: Boolean,
+    isToday: Boolean,
+    hasTodos: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        Color.Transparent
+    }
+    val borderColor = if (isToday) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        Color.Transparent
+    }
+    val textColor = if (isSelected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    val dotColor = if (isSelected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = dayNumber.toString(),
+                color = textColor,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.size(4.dp))
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(if (hasTodos) dotColor else Color.Transparent)
+            )
+        }
     }
 }
 
