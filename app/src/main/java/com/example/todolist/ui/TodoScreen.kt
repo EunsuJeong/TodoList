@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -37,10 +39,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -512,40 +516,61 @@ private fun TodoRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val contentAlpha = if (todo.isCompleted) 0.5f else 1f
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Checkbox(
-            checked = todo.isCompleted,
-            onCheckedChange = { onToggle() }
-        )
-        Column(modifier = Modifier
-            .weight(1f)
-            .clickable { onViewDetail() }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = todo.title,
-                style = MaterialTheme.typography.bodyLarge,
-                textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+            Checkbox(
+                checked = todo.isCompleted,
+                onCheckedChange = { onToggle() }
             )
-            if (!todo.memo.isNullOrEmpty()) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onViewDetail() }
+                    .padding(vertical = 4.dp)
+            ) {
                 Text(
-                    text = todo.memo,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                    text = todo.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha)
+                )
+                if (!todo.memo.isNullOrBlank()) {
+                    Text(
+                        text = todo.memo,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
+                        textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            TextButton(
+                onClick = onEdit,
+                modifier = Modifier.alpha(contentAlpha)
+            ) {
+                Text(
+                    text = "수정",
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
-        }
-        TextButton(onClick = onEdit) {
-            Text("수정")
-        }
-        TextButton(onClick = onDelete) {
-            Text("삭제")
+            TextButton(onClick = onDelete) {
+                Text(
+                    text = "삭제",
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
     }
 }
