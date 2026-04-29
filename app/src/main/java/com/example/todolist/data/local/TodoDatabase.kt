@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [TodoEntity::class], version = 2, exportSchema = false)
+@Database(entities = [TodoEntity::class], version = 3, exportSchema = false)
 abstract class TodoDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao
 
@@ -24,6 +24,17 @@ abstract class TodoDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE todos ADD COLUMN scheduledDate INTEGER NOT NULL DEFAULT 0")
+
+                val todayStartOfDay = todayStartOfDayMillis()
+                db.execSQL(
+                    "UPDATE todos SET scheduledDate = $todayStartOfDay WHERE scheduledDate = 0"
+                )
+            }
+        }
+
         @Volatile
         private var INSTANCE: TodoDatabase? = null
 
@@ -33,7 +44,7 @@ abstract class TodoDatabase : RoomDatabase() {
                     context.applicationContext,
                     TodoDatabase::class.java,
                     "todo_database"
-                ).addMigrations(MIGRATION_1_2)
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { INSTANCE = it }
             }

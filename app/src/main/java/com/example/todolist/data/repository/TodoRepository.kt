@@ -2,6 +2,7 @@ package com.example.todolist.data.repository
 
 import com.example.todolist.data.local.TodoDao
 import com.example.todolist.data.local.TodoEntity
+import com.example.todolist.data.local.todayStartOfDayMillis
 import kotlinx.coroutines.flow.Flow
 
 class TodoRepository(private val todoDao: TodoDao) {
@@ -10,7 +11,14 @@ class TodoRepository(private val todoDao: TodoDao) {
     suspend fun addTodo(title: String) {
         if (title.isBlank()) return
         val now = System.currentTimeMillis()
-        todoDao.insertTodo(TodoEntity(title = title.trim(), createdAt = now, updatedAt = now))
+        todoDao.insertTodo(
+            TodoEntity(
+                title = title.trim(),
+                createdAt = now,
+                updatedAt = now,
+                scheduledDate = todayStartOfDayMillis()
+            )
+        )
     }
 
     suspend fun updateTodo(todo: TodoEntity) {
