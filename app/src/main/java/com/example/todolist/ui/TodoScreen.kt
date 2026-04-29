@@ -55,18 +55,18 @@ fun TodoScreen(viewModel: TodoViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text(
                 text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 10.dp)
             )
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TodoFilterButton(
@@ -89,7 +89,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TodoFilterButton(
@@ -112,28 +112,48 @@ fun TodoScreen(viewModel: TodoViewModel) {
             Button(
                 onClick = { viewModel.clearCompletedTodos() },
                 enabled = uiState.completedCount > 0,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 10.dp)
             ) {
-                Text("완료 항목 삭제")
+                Text("완료 전체 삭제")
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = uiState.todos,
-                    key = { it.id }
-                ) { todo ->
-                    TodoRow(
-                        todo = todo,
-                        onToggle = { viewModel.toggleTodo(todo) },
-                        onEdit = {
-                            editingTodoId = todo.id
-                            editingTodoTitle = todo.title
-                        },
-                        onDelete = { viewModel.deleteTodo(todo) }
+            val emptyMessage = when {
+                uiState.totalCount == 0 -> "아직 등록된 할 일이 없습니다."
+                uiState.selectedFilter == TodoFilter.ACTIVE && uiState.todos.isEmpty() -> "진행중인 할 일이 없습니다."
+                uiState.selectedFilter == TodoFilter.COMPLETED && uiState.todos.isEmpty() -> "완료된 할 일이 없습니다."
+                else -> null
+            }
+
+            if (emptyMessage != null) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = emptyMessage,
+                        style = MaterialTheme.typography.bodyMedium
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = uiState.todos,
+                        key = { it.id }
+                    ) { todo ->
+                        TodoRow(
+                            todo = todo,
+                            onToggle = { viewModel.toggleTodo(todo) },
+                            onEdit = {
+                                editingTodoId = todo.id
+                                editingTodoTitle = todo.title
+                            },
+                            onDelete = { viewModel.deleteTodo(todo) }
+                        )
+                    }
                 }
             }
         }
