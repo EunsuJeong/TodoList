@@ -58,6 +58,9 @@ import java.util.Locale
 private fun formatDate(millis: Long): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
 
+private fun formatDateTime(millis: Long): String =
+    SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(millis))
+
 private fun formatMonth(millis: Long): String =
     SimpleDateFormat("yyyy년 M월", Locale.getDefault()).format(Date(millis))
 
@@ -75,6 +78,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
     var editingTodoTitle by remember { mutableStateOf("") }
     var editingTodoMemo by remember { mutableStateOf("") }
     var editingTodoScheduledDate by remember { mutableStateOf(todayStartOfDayMillis()) }
+    var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
 
     Scaffold(
         topBar = {
@@ -267,6 +271,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
                         TodoRow(
                             todo = todo,
                             onToggle = { viewModel.toggleTodo(todo) },
+                            onViewDetail = { selectedDetailTodo = todo },
                             onEdit = {
                                 editingTodoId = todo.id
                                 editingTodoTitle = todo.title
@@ -290,6 +295,20 @@ fun TodoScreen(viewModel: TodoViewModel) {
             onConfirm = { newTitle, newMemo ->
                 viewModel.addTodo(newTitle, newMemo.trim().ifEmpty { null })
                 showAddDialog = false
+            }
+        )
+    }
+
+    selectedDetailTodo?.let { todo ->
+        TodoDetailDialog(
+            todo = todo,
+            onDismiss = { selectedDetailTodo = null },
+            onEdit = {
+                selectedDetailTodo = null
+                editingTodoId = todo.id
+                editingTodoTitle = todo.title
+                editingTodoMemo = todo.memo ?: ""
+                editingTodoScheduledDate = todo.scheduledDate
             }
         )
     }
@@ -489,6 +508,7 @@ private fun TodoFilterButton(
 private fun TodoRow(
     todo: TodoEntity,
     onToggle: () -> Unit,
+    onViewDetail: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -503,7 +523,10 @@ private fun TodoRow(
             checked = todo.isCompleted,
             onCheckedChange = { onToggle() }
         )
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier
+            .weight(1f)
+            .clickable { onViewDetail() }
+        ) {
             Text(
                 text = todo.title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -649,6 +672,88 @@ private fun TodoUpdateDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("취소")
+            }
+        }
+    )
+}
+
+@Composable
+private fun TodoDetailDialog(
+    todo: TodoEntity,
+    onDismiss: () -> Unit,
+    onEdit: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Todo 상세") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "제목",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = todo.title,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                if (!todo.memo.isNullOrEmpty()) {
+                    Text(
+                        text = "메모",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = todo.memo,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                Text(
+                    text = "예정일",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatDate(todo.scheduledDate),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "완료 여부",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = if (todo.isCompleted) "완료" else "진행중",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "생성일",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatDateTime(todo.createdAt),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "수정일",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatDateTime(todo.updatedAt),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onEdit) {
+                Text("수정")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("닫기")
             }
         }
     )
