@@ -42,6 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +69,9 @@ private fun formatDateTime(millis: Long): String =
 
 private fun formatMonth(millis: Long): String =
     SimpleDateFormat("yyyy년 M월", Locale.getDefault()).format(Date(millis))
+
+private fun formatCalendarA11yDate(millis: Long): String =
+    SimpleDateFormat("yyyy년 M월 d일", Locale.getDefault()).format(Date(millis))
 
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
@@ -398,6 +403,7 @@ private fun MonthlyCalendar(
                     if (dayNumber in 1..totalDays) {
                         val dateMillis = dateMillisOfMonthDay(visibleMonth, dayNumber)
                         CalendarDayCell(
+                            dateMillis = dateMillis,
                             dayNumber = dayNumber,
                             columnIndex = columnIndex,
                             isSelected = dateMillis == selectedDate,
@@ -422,6 +428,7 @@ private fun MonthlyCalendar(
 
 @Composable
 private fun CalendarDayCell(
+    dateMillis: Long,
     dayNumber: Int,
     columnIndex: Int,
     isSelected: Boolean,
@@ -465,6 +472,20 @@ private fun CalendarDayCell(
     } else {
         defaultDotColor
     }
+    val dateText = formatCalendarA11yDate(dateMillis)
+    val statusParts = mutableListOf<String>()
+    if (isToday) statusParts.add("오늘")
+    if (isSelected) statusParts.add("선택됨")
+    if (hasOverdueTodo) {
+        statusParts.add("지난 일정 있음")
+    } else if (hasTodos) {
+        statusParts.add("할 일 있음")
+    }
+    val cellContentDescription = if (statusParts.isEmpty()) {
+        dateText
+    } else {
+        "$dateText, ${statusParts.joinToString(", ")}"
+    }
 
     Box(
         modifier = modifier
@@ -472,6 +493,7 @@ private fun CalendarDayCell(
             .clip(RoundedCornerShape(10.dp))
             .background(backgroundColor)
             .border(width = 1.5.dp, color = borderColor, shape = RoundedCornerShape(10.dp))
+            .semantics { contentDescription = cellContentDescription }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
