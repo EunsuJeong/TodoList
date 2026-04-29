@@ -1,6 +1,7 @@
 package com.example.todolist.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,11 +32,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.data.local.TodoEntity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+private fun formatDate(millis: Long): String =
+    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodoScreen(viewModel: TodoViewModel) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+fun TodoScreen(viewModel: TodoViewModel) {    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTodoId by remember { mutableStateOf<Long?>(null) }
@@ -62,6 +68,36 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
+
+            // 날짜 네비게이션
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { viewModel.goToPreviousDay() }) {
+                    Text("◀ 이전")
+                }
+                Text(
+                    text = formatDate(uiState.selectedDate),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                TextButton(onClick = { viewModel.goToNextDay() }) {
+                    Text("다음 ▶")
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                OutlinedButton(onClick = { viewModel.goToToday() }) {
+                    Text("오늘")
+                }
+            }
 
             Row(
                 modifier = Modifier
@@ -117,23 +153,40 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 Text("완료 항목 삭제")
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = uiState.todos,
-                    key = { it.id }
-                ) { todo ->
-                    TodoRow(
-                        todo = todo,
-                        onToggle = { viewModel.toggleTodo(todo) },
-                        onEdit = {
-                            editingTodoId = todo.id
-                            editingTodoTitle = todo.title
+            if (uiState.todos.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = when (uiState.selectedFilter) {
+                            TodoFilter.ALL -> "이 날짜에 등록된 할 일이 없습니다."
+                            TodoFilter.ACTIVE -> "이 날짜에 진행중인 할 일이 없습니다."
+                            TodoFilter.COMPLETED -> "이 날짜에 완료된 할 일이 없습니다."
                         },
-                        onDelete = { viewModel.deleteTodo(todo) }
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = uiState.todos,
+                        key = { it.id }
+                    ) { todo ->
+                        TodoRow(
+                            todo = todo,
+                            onToggle = { viewModel.toggleTodo(todo) },
+                            onEdit = {
+                                editingTodoId = todo.id
+                                editingTodoTitle = todo.title
+                            },
+                            onDelete = { viewModel.deleteTodo(todo) }
+                        )
+                    }
                 }
             }
         }

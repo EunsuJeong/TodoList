@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.local.TodoEntity
+import com.example.todolist.data.local.nextDayMillis
+import com.example.todolist.data.local.previousDayMillis
+import com.example.todolist.data.local.todayStartOfDayMillis
 import com.example.todolist.data.repository.TodoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,18 +33,24 @@ data class TodoUiState(
     val selectedSort: TodoSort = TodoSort.CREATED_DESC,
     val totalCount: Int = 0,
     val activeCount: Int = 0,
-    val completedCount: Int = 0
+    val completedCount: Int = 0,
+    val selectedDate: Long = 0L
 )
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
     private val selectedFilter = MutableStateFlow(TodoFilter.ALL)
     private val selectedSort = MutableStateFlow(TodoSort.CREATED_DESC)
+    private val _selectedDate = MutableStateFlow(todayStartOfDayMillis())
 
-    val uiState: StateFlow<TodoUiState> = combine(repository.todos, selectedFilter, selectedSort) { todos, filter, sort ->
+    val uiState: StateFlow<TodoUiState> = combine(
+        repository.todos, selectedFilter, selectedSort, _selectedDate
+    ) { todos, filter, sort, date ->
+        val dateTodos = todos.filter { it.scheduledDate == date }
+
         val filteredTodos = when (filter) {
-            TodoFilter.ALL -> todos
-            TodoFilter.ACTIVE -> todos.filter { !it.isCompleted }
-            TodoFilter.COMPLETED -> todos.filter { it.isCompleted }
+            TodoFilter.ALL -> dateTodos
+            TodoFilter.ACTIVE -> dateTodos.filter { !it.isCompleted }
+            TodoFilter.COMPLETED -> dateTodos.filter { it.isCompleted }
         }
 
         val sortedTodos = when (sort) {
@@ -54,15 +63,16 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
             todos = sortedTodos,
             selectedFilter = filter,
             selectedSort = sort,
-            totalCount = todos.size,
-            activeCount = todos.count { !it.isCompleted },
-            completedCount = todos.count { it.isCompleted }
+            totalCount = dateTodos.size,
+            activeCount = dateTodos.count { !it.isCompleted },
+            completedCount = dateTodos.count { it.isCompleted },
+            selectedDate = date
         )
     }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = TodoUiState()
+            initialValue = TodoUiState(selectedDate = todayStartOfDayMillis())
         )
 
     fun setFilter(filter: TodoFilter) {
@@ -73,9 +83,25 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         selectedSort.value = sort
     }
 
+    fun setSelectedDate(date: Long) {
+        _selectedDate.value = date
+    }
+
+    fun goToPreviousDay() {
+        _selectedDate.value = previousDayMillis(_selectedDate.value)
+    }
+
+    fun goToNextDay() {
+        _selectedDate.value = nextDayMillis(_selectedDate.value)
+    }
+
+    fun goToToday() {
+        _selectedDate.value = todayStartOfDayMillis()
+    }
+
     fun addTodo(title: String) {
         viewModelScope.launch {
-            repository.addTodo(title)
+            repository.addTodo(title, _selectedDate.value)
         }
     }
 
@@ -105,7 +131,7 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
 
     fun clearCompletedTodos() {
         viewModelScope.launch {
-            repository.clearCompletedTodos()
+            repository.clearCompletedTodosForDate(_selectedDate.value)
         }
     }
 }
