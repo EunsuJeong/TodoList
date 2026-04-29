@@ -83,6 +83,12 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
             repository.deleteTodo(todo)
         }
     }
+
+    fun clearCompletedTodos() {
+        viewModelScope.launch {
+            repository.clearCompletedTodos()
+        }
+    }
 }
 
 class TodoViewModelFactory(
