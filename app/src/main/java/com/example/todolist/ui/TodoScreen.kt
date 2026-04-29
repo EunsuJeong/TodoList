@@ -86,6 +86,14 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 )
             }
 
+            Button(
+                onClick = { viewModel.clearCompletedTodos() },
+                enabled = uiState.completedCount > 0,
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                Text("완료 항목 삭제")
+            }
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
