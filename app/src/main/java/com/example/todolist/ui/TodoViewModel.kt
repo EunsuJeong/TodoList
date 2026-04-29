@@ -40,6 +40,7 @@ data class TodoUiState(
     val selectedDate: Long = 0L,
     val visibleMonth: Long = 0L,
     val datesWithTodos: Set<Long> = emptySet(),
+    val overdueDates: Set<Long> = emptySet(),
     val searchQuery: String = "",
     val searchResultCount: Int = 0
 )
@@ -52,7 +53,8 @@ private data class BaseTodosState(
     val selectedSort: TodoSort,
     val selectedDate: Long,
     val visibleMonth: Long,
-    val datesWithTodos: Set<Long>
+    val datesWithTodos: Set<Long>,
+    val overdueDates: Set<Long>
 )
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
@@ -67,6 +69,12 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
     ) { todos, filter, sort, date, month ->
         val dateTodos = todos.filter { it.scheduledDate == date }
         val datesWithTodos = todos.map { it.scheduledDate }.toSet()
+        val today = todayStartOfDayMillis()
+        val overdueDates = todos
+            .asSequence()
+            .filter { !it.isCompleted && it.scheduledDate < today }
+            .map { it.scheduledDate }
+            .toSet()
         val statusFiltered = when (filter) {
             TodoFilter.ALL -> dateTodos
             TodoFilter.ACTIVE -> dateTodos.filter { !it.isCompleted }
@@ -79,7 +87,8 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
             selectedSort = sort,
             selectedDate = date,
             visibleMonth = month,
-            datesWithTodos = datesWithTodos
+            datesWithTodos = datesWithTodos,
+            overdueDates = overdueDates
         )
     }.combine(_searchQuery) { base, query ->
         val trimmed = query.trim()
@@ -106,6 +115,7 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
             selectedDate = base.selectedDate,
             visibleMonth = base.visibleMonth,
             datesWithTodos = base.datesWithTodos,
+            overdueDates = base.overdueDates,
             searchQuery = query,
             searchResultCount = sortedTodos.size
         )

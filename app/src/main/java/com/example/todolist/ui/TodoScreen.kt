@@ -131,6 +131,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 visibleMonth = uiState.visibleMonth,
                 selectedDate = uiState.selectedDate,
                 datesWithTodos = uiState.datesWithTodos,
+                overdueDates = uiState.overdueDates,
                 onDateSelected = viewModel::setSelectedDate,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -349,6 +350,7 @@ private fun MonthlyCalendar(
     visibleMonth: Long,
     selectedDate: Long,
     datesWithTodos: Set<Long>,
+    overdueDates: Set<Long>,
     onDateSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -401,6 +403,7 @@ private fun MonthlyCalendar(
                             isSelected = dateMillis == selectedDate,
                             isToday = dateMillis == today,
                             hasTodos = datesWithTodos.contains(dateMillis),
+                            hasOverdueTodo = overdueDates.contains(dateMillis),
                             onClick = { onDateSelected(dateMillis) },
                             modifier = Modifier.weight(1f)
                         )
@@ -424,6 +427,7 @@ private fun CalendarDayCell(
     isSelected: Boolean,
     isToday: Boolean,
     hasTodos: Boolean,
+    hasOverdueTodo: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -450,11 +454,16 @@ private fun CalendarDayCell(
     } else {
         baseTextColor
     }
-    // 점 색상
-    val dotColor = if (isSelected) {
+    // 점 색상 (overdue 우선)
+    val defaultDotColor = if (isSelected) {
         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
     } else {
         MaterialTheme.colorScheme.primary
+    }
+    val dotColor = if (hasOverdueTodo) {
+        MaterialTheme.colorScheme.error
+    } else {
+        defaultDotColor
     }
 
     Box(
@@ -482,7 +491,7 @@ private fun CalendarDayCell(
                 modifier = Modifier
                     .size(5.dp)
                     .clip(CircleShape)
-                    .background(if (hasTodos) dotColor else Color.Transparent)
+                    .background(if (hasTodos || hasOverdueTodo) dotColor else Color.Transparent)
             )
         }
     }
