@@ -9,20 +9,30 @@ class TodoRepository(private val todoDao: TodoDao) {
 
     suspend fun addTodo(title: String) {
         if (title.isBlank()) return
-        todoDao.insertTodo(TodoEntity(title = title.trim()))
+        val now = System.currentTimeMillis()
+        todoDao.insertTodo(TodoEntity(title = title.trim(), createdAt = now, updatedAt = now))
     }
 
     suspend fun updateTodo(todo: TodoEntity) {
-        todoDao.updateTodo(todo)
+        todoDao.updateTodo(todo.copy(updatedAt = System.currentTimeMillis()))
     }
 
     suspend fun updateTodoTitle(todoId: Long, newTitle: String) {
         if (newTitle.isBlank()) return
-        todoDao.updateTodoTitle(todoId = todoId, newTitle = newTitle.trim())
+        todoDao.updateTodoTitle(
+            todoId = todoId,
+            newTitle = newTitle.trim(),
+            updatedAt = System.currentTimeMillis()
+        )
     }
 
     suspend fun toggleTodo(todo: TodoEntity) {
-        todoDao.updateTodo(todo.copy(isCompleted = !todo.isCompleted))
+        todoDao.updateTodo(
+            todo.copy(
+                isCompleted = !todo.isCompleted,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
     }
 
     suspend fun deleteTodo(todo: TodoEntity) {
