@@ -39,7 +39,20 @@ data class TodoUiState(
     val completedCount: Int = 0,
     val selectedDate: Long = 0L,
     val visibleMonth: Long = 0L,
-    val datesWithTodos: Set<Long> = emptySet()
+    val datesWithTodos: Set<Long> = emptySet(),
+    val searchQuery: String = "",
+    val searchResultCount: Int = 0
+)
+
+/** combine() 중간 결과 – 검색 이전 단계의 상태를 전달하기 위한 내부 데이터 클래스 */
+private data class BaseTodosState(
+    val dateTodos: List<TodoEntity>,
+    val statusFilteredTodos: List<TodoEntity>,
+    val selectedFilter: TodoFilter,
+    val selectedSort: TodoSort,
+    val selectedDate: Long,
+    val visibleMonth: Long,
+    val datesWithTodos: Set<Long>
 )
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
@@ -47,35 +60,51 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
     private val selectedSort = MutableStateFlow(TodoSort.CREATED_DESC)
     private val _selectedDate = MutableStateFlow(todayStartOfDayMillis())
     private val visibleMonth = MutableStateFlow(monthStartMillis(todayStartOfDayMillis()))
+    private val _searchQuery = MutableStateFlow("")
 
     val uiState: StateFlow<TodoUiState> = combine(
         repository.todos, selectedFilter, selectedSort, _selectedDate, visibleMonth
     ) { todos, filter, sort, date, month ->
         val dateTodos = todos.filter { it.scheduledDate == date }
         val datesWithTodos = todos.map { it.scheduledDate }.toSet()
-
-        val filteredTodos = when (filter) {
+        val statusFiltered = when (filter) {
             TodoFilter.ALL -> dateTodos
             TodoFilter.ACTIVE -> dateTodos.filter { !it.isCompleted }
             TodoFilter.COMPLETED -> dateTodos.filter { it.isCompleted }
         }
-
-        val sortedTodos = when (sort) {
-            TodoSort.CREATED_DESC -> filteredTodos.sortedByDescending { it.createdAt }
-            TodoSort.CREATED_ASC -> filteredTodos.sortedBy { it.createdAt }
-            TodoSort.UPDATED_DESC -> filteredTodos.sortedByDescending { it.updatedAt }
-        }
-
-        TodoUiState(
-            todos = sortedTodos,
+        BaseTodosState(
+            dateTodos = dateTodos,
+            statusFilteredTodos = statusFiltered,
             selectedFilter = filter,
             selectedSort = sort,
-            totalCount = dateTodos.size,
-            activeCount = dateTodos.count { !it.isCompleted },
-            completedCount = dateTodos.count { it.isCompleted },
             selectedDate = date,
             visibleMonth = month,
             datesWithTodos = datesWithTodos
+        )
+    }.combine(_searchQuery) { base, query ->
+        val trimmed = query.trim()
+        val searchFiltered = if (trimmed.isEmpty()) {
+            base.statusFilteredTodos
+        } else {
+            base.statusFilteredTodos.filter { it.title.contains(trimmed, ignoreCase = true) }
+        }
+        val sortedTodos = when (base.selectedSort) {
+            TodoSort.CREATED_DESC -> searchFiltered.sortedByDescending { it.createdAt }
+            TodoSort.CREATED_ASC -> searchFiltered.sortedBy { it.createdAt }
+            TodoSort.UPDATED_DESC -> searchFiltered.sortedByDescending { it.updatedAt }
+        }
+        TodoUiState(
+            todos = sortedTodos,
+            selectedFilter = base.selectedFilter,
+            selectedSort = base.selectedSort,
+            totalCount = base.dateTodos.size,
+            activeCount = base.dateTodos.count { !it.isCompleted },
+            completedCount = base.dateTodos.count { it.isCompleted },
+            selectedDate = base.selectedDate,
+            visibleMonth = base.visibleMonth,
+            datesWithTodos = base.datesWithTodos,
+            searchQuery = query,
+            searchResultCount = sortedTodos.size
         )
     }
         .stateIn(
@@ -98,6 +127,14 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
 
     fun setSort(sort: TodoSort) {
         selectedSort.value = sort
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun clearSearchQuery() {
+        _searchQuery.value = ""
     }
 
     fun setSelectedDate(date: Long) {
