@@ -445,16 +445,23 @@ private fun TodaySummaryCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (overdueActiveCount > 0) {
-                Text(
-                    text = "⚠️ 지난 일정 ${overdueActiveCount}개",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = if (onOverdueClick != null) {
-                        Modifier.clickable(onClick = onOverdueClick)
-                    } else {
-                        Modifier
-                    }
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f))
+                        .then(
+                            if (onOverdueClick != null) Modifier.clickable(onClick = onOverdueClick)
+                            else Modifier
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "⚠️ 지난 일정 ${overdueActiveCount}개",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
