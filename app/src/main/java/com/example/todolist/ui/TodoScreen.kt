@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +32,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -101,7 +103,7 @@ private fun formatBottomTabA11yLabel(tabName: String, overdueCount: Int? = null)
 private fun formatFilterSortSummary(
     priorityFilter: TodoPriorityFilter,
     sort: TodoSort
-): String = "${priorityFilterLabel(priorityFilter)} · ${sortLabel(sort)}"
+): String = "중요도: ${priorityFilterLabel(priorityFilter)} · 정렬: ${sortLabel(sort)}"
 
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
@@ -370,25 +372,56 @@ private fun TodoListTabContent(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            TodoFilterButton(text = "전체", selected = uiState.selectedFilter == TodoFilter.ALL, onClick = { viewModel.setFilter(TodoFilter.ALL) })
-            TodoFilterButton(text = "진행중", selected = uiState.selectedFilter == TodoFilter.ACTIVE, onClick = { viewModel.setFilter(TodoFilter.ACTIVE) })
-            TodoFilterButton(text = "완료", selected = uiState.selectedFilter == TodoFilter.COMPLETED, onClick = { viewModel.setFilter(TodoFilter.COMPLETED) })
+            TodoFilterButton(
+                text = "전체",
+                selected = uiState.selectedFilter == TodoFilter.ALL,
+                onClick = { viewModel.setFilter(TodoFilter.ALL) }
+            )
+            TodoFilterButton(
+                text = "진행중",
+                selected = uiState.selectedFilter == TodoFilter.ACTIVE,
+                onClick = { viewModel.setFilter(TodoFilter.ACTIVE) }
+            )
+            TodoFilterButton(
+                text = "완료",
+                selected = uiState.selectedFilter == TodoFilter.COMPLETED,
+                onClick = { viewModel.setFilter(TodoFilter.COMPLETED) }
+            )
         }
-        Row(
+        Card(
+            onClick = { showFilterSortSheet = true },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedButton(onClick = { showFilterSortSheet = true }) {
-                Text("필터/정렬")
-            }
-            Text(
-                text = formatFilterSortSummary(uiState.selectedPriorityFilter, uiState.selectedSort),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = "필터/정렬",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = formatFilterSortSummary(uiState.selectedPriorityFilter, uiState.selectedSort),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                OutlinedButton(onClick = { showFilterSortSheet = true }) {
+                    Text("변경")
+                }
+            }
         }
         if (uiState.completedCount > 0) {
             TextButton(
@@ -456,7 +489,7 @@ private fun FilterSortBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "필터/정렬",
@@ -465,26 +498,39 @@ private fun FilterSortBottomSheet(
             )
 
             Text(
+                text = formatFilterSortSummary(selectedPriorityFilter, selectedSort),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            HorizontalDivider()
+
+            Text(
                 text = "중요도",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TodoFilterButton("전체", selectedPriorityFilter == TodoPriorityFilter.ALL) {
-                    onPrioritySelected(TodoPriorityFilter.ALL)
-                }
-                TodoFilterButton("높음", selectedPriorityFilter == TodoPriorityFilter.HIGH) {
-                    onPrioritySelected(TodoPriorityFilter.HIGH)
-                }
-                TodoFilterButton("보통", selectedPriorityFilter == TodoPriorityFilter.NORMAL) {
-                    onPrioritySelected(TodoPriorityFilter.NORMAL)
-                }
-                TodoFilterButton("낮음", selectedPriorityFilter == TodoPriorityFilter.LOW) {
-                    onPrioritySelected(TodoPriorityFilter.LOW)
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterSortSelectionRow(
+                    text = "전체",
+                    selected = selectedPriorityFilter == TodoPriorityFilter.ALL,
+                    onClick = { onPrioritySelected(TodoPriorityFilter.ALL) }
+                )
+                FilterSortSelectionRow(
+                    text = "높음",
+                    selected = selectedPriorityFilter == TodoPriorityFilter.HIGH,
+                    onClick = { onPrioritySelected(TodoPriorityFilter.HIGH) }
+                )
+                FilterSortSelectionRow(
+                    text = "보통",
+                    selected = selectedPriorityFilter == TodoPriorityFilter.NORMAL,
+                    onClick = { onPrioritySelected(TodoPriorityFilter.NORMAL) }
+                )
+                FilterSortSelectionRow(
+                    text = "낮음",
+                    selected = selectedPriorityFilter == TodoPriorityFilter.LOW,
+                    onClick = { onPrioritySelected(TodoPriorityFilter.LOW) }
+                )
             }
 
             Text(
@@ -492,34 +538,81 @@ private fun FilterSortBottomSheet(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TodoFilterButton("최신순", selectedSort == TodoSort.CREATED_DESC) {
-                    onSortSelected(TodoSort.CREATED_DESC)
-                }
-                TodoFilterButton("오래된순", selectedSort == TodoSort.CREATED_ASC) {
-                    onSortSelected(TodoSort.CREATED_ASC)
-                }
-                TodoFilterButton("수정순", selectedSort == TodoSort.UPDATED_DESC) {
-                    onSortSelected(TodoSort.UPDATED_DESC)
-                }
-                TodoFilterButton("중요순", selectedSort == TodoSort.PRIORITY_DESC) {
-                    onSortSelected(TodoSort.PRIORITY_DESC)
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterSortSelectionRow(
+                    text = "최신순",
+                    selected = selectedSort == TodoSort.CREATED_DESC,
+                    onClick = { onSortSelected(TodoSort.CREATED_DESC) }
+                )
+                FilterSortSelectionRow(
+                    text = "오래된순",
+                    selected = selectedSort == TodoSort.CREATED_ASC,
+                    onClick = { onSortSelected(TodoSort.CREATED_ASC) }
+                )
+                FilterSortSelectionRow(
+                    text = "수정순",
+                    selected = selectedSort == TodoSort.UPDATED_DESC,
+                    onClick = { onSortSelected(TodoSort.UPDATED_DESC) }
+                )
+                FilterSortSelectionRow(
+                    text = "중요순",
+                    selected = selectedSort == TodoSort.PRIORITY_DESC,
+                    onClick = { onSortSelected(TodoSort.PRIORITY_DESC) }
+                )
             }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 12.dp),
+                    .padding(top = 4.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onReset) { Text("초기화") }
                 TextButton(onClick = onDone) { Text("완료") }
             }
         }
+    }
+}
+
+@Composable
+private fun FilterSortSelectionRow(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val textColor = if (selected) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .border(
+                width = 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = textColor
+        )
+        RadioButton(selected = selected, onClick = null)
     }
 }
 
@@ -1107,14 +1200,15 @@ private fun PriorityLabel(priority: Int) {
 private fun TodoFilterButton(
     text: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     if (selected) {
-        Button(onClick = onClick) {
+        Button(onClick = onClick, modifier = modifier.heightIn(min = 44.dp)) {
             Text(text)
         }
     } else {
-        OutlinedButton(onClick = onClick) {
+        OutlinedButton(onClick = onClick, modifier = modifier.heightIn(min = 44.dp)) {
             Text(text)
         }
     }
