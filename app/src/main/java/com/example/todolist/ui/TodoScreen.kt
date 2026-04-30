@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -368,6 +369,8 @@ private fun SelectedDateHeader(
     modifier: Modifier = Modifier
 ) {
     val today = todayStartOfDayMillis()
+    val selectedDateText = formatKoreanDateWithDay(selectedDate)
+    val countText = "전체 ${totalCount}개, 진행중 ${activeCount}개, 완료 ${completedCount}개"
     val (statusLabel, statusContainerColor, statusTextColor) = when {
         selectedDate == today -> Triple(
             "오늘",
@@ -385,9 +388,12 @@ private fun SelectedDateHeader(
             MaterialTheme.colorScheme.onSecondaryContainer
         )
     }
+    val headerContentDescription = "$selectedDateText, $statusLabel, $countText"
 
     Card(
-        modifier = modifier,
+        modifier = modifier.clearAndSetSemantics {
+            contentDescription = headerContentDescription
+        },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
         ),
@@ -403,7 +409,7 @@ private fun SelectedDateHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = formatKoreanDateWithDay(selectedDate),
+                    text = selectedDateText,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
