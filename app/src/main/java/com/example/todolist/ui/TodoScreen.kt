@@ -505,10 +505,11 @@ private fun SearchTabContent(
                 TextButton(onClick = { viewModel.clearSearchQuery() }) { Text("✕") }
             }
         }
+        val conditionSummary = "${filterLabel(uiState.selectedFilter)} · ${priorityFilterLabel(uiState.selectedPriorityFilter)} · ${sortLabel(uiState.selectedSort)}"
         if (uiState.searchQuery.trim().isNotEmpty()) {
             Text(
-                text = "검색 결과 ${uiState.searchResultCount}개",
-                style = MaterialTheme.typography.labelMedium,
+                text = "검색 결과 ${uiState.searchResultCount}개 · $conditionSummary",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -529,6 +530,11 @@ private fun SearchTabContent(
                     )
                     Text(
                         text = "전체 할 일에서 제목과 메모를 검색합니다.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "전체 Todo 검색 · $conditionSummary",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -796,6 +802,26 @@ private fun repeatTypeLabel(repeatType: Int): String = when (repeatType) {
     2 -> "매주"
     3 -> "매월"
     else -> "반복 없음"
+}
+
+private fun filterLabel(filter: TodoFilter): String = when (filter) {
+    TodoFilter.ALL -> "전체"
+    TodoFilter.ACTIVE -> "진행중"
+    TodoFilter.COMPLETED -> "완료"
+}
+
+private fun priorityFilterLabel(filter: TodoPriorityFilter): String = when (filter) {
+    TodoPriorityFilter.ALL -> "중요도 전체"
+    TodoPriorityFilter.HIGH -> "높음"
+    TodoPriorityFilter.NORMAL -> "보통"
+    TodoPriorityFilter.LOW -> "낮음"
+}
+
+private fun sortLabel(sort: TodoSort): String = when (sort) {
+    TodoSort.CREATED_DESC -> "최신순"
+    TodoSort.CREATED_ASC -> "오래된순"
+    TodoSort.UPDATED_DESC -> "수정순"
+    TodoSort.PRIORITY_DESC -> "중요순"
 }
 
 private fun priorityColor(priority: Int, colorScheme: androidx.compose.material3.ColorScheme): androidx.compose.ui.graphics.Color = when (priority) {
