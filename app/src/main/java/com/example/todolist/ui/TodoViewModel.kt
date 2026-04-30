@@ -10,6 +10,7 @@ import com.example.todolist.data.local.nextMonthMillis
 import com.example.todolist.data.local.previousDayMillis
 import com.example.todolist.data.local.previousMonthMillis
 import com.example.todolist.data.local.todayStartOfDayMillis
+import com.example.todolist.data.preferences.TodoViewPreferences
 import com.example.todolist.data.repository.TodoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -68,10 +69,10 @@ private data class BaseTodosState(
     val overdueDates: Set<Long>
 )
 
-class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
-    private val selectedFilter = MutableStateFlow(TodoFilter.ALL)
-    private val selectedSort = MutableStateFlow(TodoSort.CREATED_DESC)
-    private val _selectedPriorityFilter = MutableStateFlow(TodoPriorityFilter.ALL)
+class TodoViewModel(private val repository: TodoRepository, private val preferences: TodoViewPreferences) : ViewModel() {
+    private val selectedFilter = MutableStateFlow(preferences.getFilter())
+    private val selectedSort = MutableStateFlow(preferences.getSort())
+    private val _selectedPriorityFilter = MutableStateFlow(preferences.getPriorityFilter())
     private val _selectedDate = MutableStateFlow(todayStartOfDayMillis())
     private val visibleMonth = MutableStateFlow(monthStartMillis(todayStartOfDayMillis()))
     private val _searchQuery = MutableStateFlow("")
@@ -163,14 +164,17 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
 
     fun setFilter(filter: TodoFilter) {
         selectedFilter.value = filter
+        preferences.saveFilter(filter)
     }
 
     fun setPriorityFilter(filter: TodoPriorityFilter) {
         _selectedPriorityFilter.value = filter
+        preferences.savePriorityFilter(filter)
     }
 
     fun setSort(sort: TodoSort) {
         selectedSort.value = sort
+        preferences.saveSort(sort)
     }
 
     fun setSearchQuery(query: String) {
@@ -255,12 +259,13 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
 }
 
 class TodoViewModelFactory(
-    private val repository: TodoRepository
+    private val repository: TodoRepository,
+    private val preferences: TodoViewPreferences
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TodoViewModel::class.java)) {
-            return TodoViewModel(repository) as T
+            return TodoViewModel(repository, preferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

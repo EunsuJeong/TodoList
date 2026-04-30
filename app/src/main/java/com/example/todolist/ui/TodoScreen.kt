@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.R
 import com.example.todolist.data.local.TodoEntity
+import com.example.todolist.data.preferences.TodoViewPreferences
 import com.example.todolist.data.local.dateMillisOfMonthDay
 import com.example.todolist.data.local.dayOfWeekOffsetOfMonthStart
 import com.example.todolist.data.local.daysInMonth
@@ -89,7 +90,7 @@ enum class TodoMainTab { TODO, CALENDAR, SEARCH }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun TodoScreen(viewModel: TodoViewModel) {
+fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTodoId by remember { mutableStateOf<Long?>(null) }
@@ -99,7 +100,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
     var editingTodoPriority by remember { mutableStateOf(1) }
     var addingTodoPriority by remember { mutableStateOf(1) }
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
-    var selectedTab by rememberSaveable { mutableStateOf(TodoMainTab.TODO) }
+    var selectedTab by rememberSaveable { mutableStateOf(preferences.getMainTab()) }
 
     Scaffold(
         topBar = {
@@ -116,19 +117,28 @@ fun TodoScreen(viewModel: TodoViewModel) {
             NavigationBar {
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.TODO,
-                    onClick = { selectedTab = TodoMainTab.TODO },
+                    onClick = { 
+                        selectedTab = TodoMainTab.TODO
+                        preferences.saveMainTab(TodoMainTab.TODO)
+                    },
                     icon = {},
                     label = { Text("할 일") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.CALENDAR,
-                    onClick = { selectedTab = TodoMainTab.CALENDAR },
+                    onClick = { 
+                        selectedTab = TodoMainTab.CALENDAR
+                        preferences.saveMainTab(TodoMainTab.CALENDAR)
+                    },
                     icon = {},
                     label = { Text("달력") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.SEARCH,
-                    onClick = { selectedTab = TodoMainTab.SEARCH },
+                    onClick = { 
+                        selectedTab = TodoMainTab.SEARCH
+                        preferences.saveMainTab(TodoMainTab.SEARCH)
+                    },
                     icon = {},
                     label = { Text("검색") }
                 )
@@ -151,10 +161,12 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 onDateSelected = { selectedDate ->
                     viewModel.setSelectedDate(selectedDate)
                     selectedTab = TodoMainTab.TODO
+                    preferences.saveMainTab(TodoMainTab.TODO)
                 },
                 onGoToToday = {
                     viewModel.goToToday()
                     selectedTab = TodoMainTab.TODO
+                    preferences.saveMainTab(TodoMainTab.TODO)
                 },
                 modifier = Modifier
                     .fillMaxSize()
