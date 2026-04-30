@@ -41,6 +41,7 @@ enum class TodoPriorityFilter {
 
 data class TodoUiState(
     val todos: List<TodoEntity> = emptyList(),
+    val searchTodos: List<TodoEntity> = emptyList(),
     val selectedFilter: TodoFilter = TodoFilter.ALL,
     val selectedSort: TodoSort = TodoSort.CREATED_DESC,
     val selectedPriorityFilter: TodoPriorityFilter = TodoPriorityFilter.ALL,
@@ -57,9 +58,12 @@ data class TodoUiState(
 
 /** combine() 중간 결과 – 검색 이전 단계의 상태를 전달하기 위한 내부 데이터 클래스 */
 private data class BaseTodosState(
+    val allTodos: List<TodoEntity>,
     val dateTodos: List<TodoEntity>,
-    val statusFilteredTodos: List<TodoEntity>,
-    val priorityFilteredTodos: List<TodoEntity>,
+    val statusFilteredDateTodos: List<TodoEntity>,
+    val statusFilteredAllTodos: List<TodoEntity>,
+    val priorityFilteredDateTodos: List<TodoEntity>,
+    val priorityFilteredAllTodos: List<TodoEntity>,
     val selectedFilter: TodoFilter,
     val selectedSort: TodoSort,
     val selectedPriorityFilter: TodoPriorityFilter,
@@ -88,15 +92,23 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             .filter { !it.isCompleted && it.scheduledDate < today }
             .map { it.scheduledDate }
             .toSet()
-        val statusFiltered = when (filter) {
+        val statusFilteredDate = when (filter) {
             TodoFilter.ALL -> dateTodos
             TodoFilter.ACTIVE -> dateTodos.filter { !it.isCompleted }
             TodoFilter.COMPLETED -> dateTodos.filter { it.isCompleted }
         }
+        val statusFilteredAll = when (filter) {
+            TodoFilter.ALL -> todos
+            TodoFilter.ACTIVE -> todos.filter { !it.isCompleted }
+            TodoFilter.COMPLETED -> todos.filter { it.isCompleted }
+        }
         BaseTodosState(
+            allTodos = todos,
             dateTodos = dateTodos,
-            statusFilteredTodos = statusFiltered,
-            priorityFilteredTodos = statusFiltered,
+            statusFilteredDateTodos = statusFilteredDate,
+            statusFilteredAllTodos = statusFilteredAll,
+            priorityFilteredDateTodos = statusFilteredDate,
+            priorityFilteredAllTodos = statusFilteredAll,
             selectedFilter = filter,
             selectedSort = sort,
             selectedPriorityFilter = TodoPriorityFilter.ALL,
@@ -106,34 +118,58 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             overdueDates = overdueDates
         )
     }.combine(_selectedPriorityFilter) { base, priorityFilter ->
-        val priorityFiltered = when (priorityFilter) {
-            TodoPriorityFilter.ALL -> base.statusFilteredTodos
-            TodoPriorityFilter.HIGH -> base.statusFilteredTodos.filter { it.priority == 2 }
-            TodoPriorityFilter.NORMAL -> base.statusFilteredTodos.filter { it.priority == 1 }
-            TodoPriorityFilter.LOW -> base.statusFilteredTodos.filter { it.priority == 0 }
+        val priorityFilteredDate = when (priorityFilter) {
+            TodoPriorityFilter.ALL -> base.statusFilteredDateTodos
+            TodoPriorityFilter.HIGH -> base.statusFilteredDateTodos.filter { it.priority == 2 }
+            TodoPriorityFilter.NORMAL -> base.statusFilteredDateTodos.filter { it.priority == 1 }
+            TodoPriorityFilter.LOW -> base.statusFilteredDateTodos.filter { it.priority == 0 }
+        }
+        val priorityFilteredAll = when (priorityFilter) {
+            TodoPriorityFilter.ALL -> base.statusFilteredAllTodos
+            TodoPriorityFilter.HIGH -> base.statusFilteredAllTodos.filter { it.priority == 2 }
+            TodoPriorityFilter.NORMAL -> base.statusFilteredAllTodos.filter { it.priority == 1 }
+            TodoPriorityFilter.LOW -> base.statusFilteredAllTodos.filter { it.priority == 0 }
         }
         base.copy(
-            priorityFilteredTodos = priorityFiltered,
+            priorityFilteredDateTodos = priorityFilteredDate,
+            priorityFilteredAllTodos = priorityFilteredAll,
             selectedPriorityFilter = priorityFilter
         )
     }.combine(_searchQuery) { base, query ->
         val trimmed = query.trim()
-        val searchFiltered = if (trimmed.isEmpty()) {
-            base.priorityFilteredTodos
+        val todoTabSearchFiltered = if (trimmed.isEmpty()) {
+            base.priorityFilteredDateTodos
         } else {
-            base.priorityFilteredTodos.filter {
+            base.priorityFilteredDateTodos.filter {
                 it.title.contains(trimmed, ignoreCase = true) ||
                     it.memo?.contains(trimmed, ignoreCase = true) == true
             }
         }
-        val sortedTodos = when (base.selectedSort) {
-            TodoSort.CREATED_DESC -> searchFiltered.sortedByDescending { it.createdAt }
-            TodoSort.CREATED_ASC -> searchFiltered.sortedBy { it.createdAt }
-            TodoSort.UPDATED_DESC -> searchFiltered.sortedByDescending { it.updatedAt }
-            TodoSort.PRIORITY_DESC -> searchFiltered.sortedWith(compareBy({ -it.priority }, { -it.createdAt }))
+
+        val globalSearchFiltered = if (trimmed.isEmpty()) {
+            emptyList()
+        } else {
+            base.priorityFilteredAllTodos.filter {
+                it.title.contains(trimmed, ignoreCase = true) ||
+                    it.memo?.contains(trimmed, ignoreCase = true) == true
+            }
         }
+
+        fun sortTodos(items: List<TodoEntity>): List<TodoEntity> {
+            return when (base.selectedSort) {
+                TodoSort.CREATED_DESC -> items.sortedByDescending { it.createdAt }
+                TodoSort.CREATED_ASC -> items.sortedBy { it.createdAt }
+                TodoSort.UPDATED_DESC -> items.sortedByDescending { it.updatedAt }
+                TodoSort.PRIORITY_DESC -> items.sortedWith(compareBy({ -it.priority }, { -it.createdAt }))
+            }
+        }
+
+        val sortedTodoTabTodos = sortTodos(todoTabSearchFiltered)
+        val sortedSearchTodos = sortTodos(globalSearchFiltered)
+
         TodoUiState(
-            todos = sortedTodos,
+            todos = sortedTodoTabTodos,
+            searchTodos = sortedSearchTodos,
             selectedFilter = base.selectedFilter,
             selectedSort = base.selectedSort,
             selectedPriorityFilter = base.selectedPriorityFilter,
@@ -145,7 +181,7 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             datesWithTodos = base.datesWithTodos,
             overdueDates = base.overdueDates,
             searchQuery = query,
-            searchResultCount = sortedTodos.size
+            searchResultCount = sortedSearchTodos.size
         )
     }
         .stateIn(
