@@ -27,7 +27,8 @@ enum class TodoFilter {
 enum class TodoSort {
     CREATED_DESC,
     CREATED_ASC,
-    UPDATED_DESC
+    UPDATED_DESC,
+    PRIORITY_DESC
 }
 
 data class TodoUiState(
@@ -104,6 +105,7 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
             TodoSort.CREATED_DESC -> searchFiltered.sortedByDescending { it.createdAt }
             TodoSort.CREATED_ASC -> searchFiltered.sortedBy { it.createdAt }
             TodoSort.UPDATED_DESC -> searchFiltered.sortedByDescending { it.updatedAt }
+            TodoSort.PRIORITY_DESC -> searchFiltered.sortedWith(compareBy({ -it.priority }, { -it.createdAt }))
         }
         TodoUiState(
             todos = sortedTodos,
@@ -174,9 +176,9 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         updateSelectedDate(todayStartOfDayMillis())
     }
 
-    fun addTodo(title: String, memo: String? = null) {
+    fun addTodo(title: String, memo: String? = null, priority: Int = 1) {
         viewModelScope.launch {
-            repository.addTodo(title, _selectedDate.value, memo)
+            repository.addTodo(title, _selectedDate.value, memo, priority)
         }
     }
 
@@ -198,13 +200,14 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         }
     }
 
-    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null) {
+    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null, priority: Int = 1) {
         viewModelScope.launch {
             repository.updateTodoDetails(
                 todoId = todoId,
                 newTitle = newTitle,
                 scheduledDate = scheduledDate,
-                memo = memo
+                memo = memo,
+                priority = priority
             )
         }
     }

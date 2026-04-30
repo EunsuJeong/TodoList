@@ -23,13 +23,14 @@ interface TodoDao {
     suspend fun updateTodoTitle(todoId: Long, newTitle: String, updatedAt: Long)
 
     @Query(
-        "UPDATE todos SET title = :newTitle, scheduledDate = :scheduledDate, memo = :memo, updatedAt = :updatedAt WHERE id = :todoId"
+        "UPDATE todos SET title = :newTitle, scheduledDate = :scheduledDate, memo = :memo, priority = :priority, updatedAt = :updatedAt WHERE id = :todoId"
     )
     suspend fun updateTodoDetails(
         todoId: Long,
         newTitle: String,
         scheduledDate: Long,
         memo: String?,
+        priority: Int,
         updatedAt: Long
     )
 
