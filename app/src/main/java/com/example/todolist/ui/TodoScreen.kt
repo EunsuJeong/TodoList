@@ -96,6 +96,8 @@ fun TodoScreen(viewModel: TodoViewModel) {
     var editingTodoTitle by remember { mutableStateOf("") }
     var editingTodoMemo by remember { mutableStateOf("") }
     var editingTodoScheduledDate by remember { mutableStateOf(todayStartOfDayMillis()) }
+    var editingTodoPriority by remember { mutableStateOf(1) }
+    var addingTodoPriority by remember { mutableStateOf(1) }
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
     var selectedTab by rememberSaveable { mutableStateOf(TodoMainTab.TODO) }
 
@@ -176,10 +178,15 @@ fun TodoScreen(viewModel: TodoViewModel) {
             title = "할 일 추가",
             initialValue = "",
             initialMemo = "",
-            onDismiss = { showAddDialog = false },
-            onConfirm = { newTitle, newMemo ->
-                viewModel.addTodo(newTitle, newMemo.trim().ifEmpty { null })
+            initialPriority = addingTodoPriority,
+            onDismiss = { 
                 showAddDialog = false
+                addingTodoPriority = 1
+            },
+            onConfirm = { newTitle, newMemo, priority ->
+                viewModel.addTodo(newTitle, newMemo.trim().ifEmpty { null }, priority)
+                showAddDialog = false
+                addingTodoPriority = 1
             }
         )
     }
@@ -194,6 +201,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 editingTodoTitle = todo.title
                 editingTodoMemo = todo.memo ?: ""
                 editingTodoScheduledDate = todo.scheduledDate
+                editingTodoPriority = todo.priority
             },
             onDelete = {
                 viewModel.deleteTodo(todo)
@@ -208,25 +216,29 @@ fun TodoScreen(viewModel: TodoViewModel) {
             initialValue = editingTodoTitle,
             initialMemo = editingTodoMemo,
             initialScheduledDate = editingTodoScheduledDate,
+            initialPriority = editingTodoPriority,
             onDismiss = {
                 editingTodoId = null
                 editingTodoTitle = ""
                 editingTodoMemo = ""
                 editingTodoScheduledDate = todayStartOfDayMillis()
+                editingTodoPriority = 1
             },
-            onConfirm = { newTitle, newScheduledDate, newMemo ->
+            onConfirm = { newTitle, newScheduledDate, newMemo, priority ->
                 if (newTitle.isNotBlank()) {
                     viewModel.updateTodoDetails(
                         todoId = todoId,
                         newTitle = newTitle,
                         scheduledDate = newScheduledDate,
-                        memo = newMemo.trim().ifEmpty { null }
+                        memo = newMemo.trim().ifEmpty { null },
+                        priority = priority
                     )
                 }
                 editingTodoId = null
                 editingTodoTitle = ""
                 editingTodoMemo = ""
                 editingTodoScheduledDate = todayStartOfDayMillis()
+                editingTodoPriority = 1
             }
         )
     }
@@ -268,6 +280,7 @@ private fun TodoListTabContent(
             TodoFilterButton(text = "최신순", selected = uiState.selectedSort == TodoSort.CREATED_DESC, onClick = { viewModel.setSort(TodoSort.CREATED_DESC) })
             TodoFilterButton(text = "오래된순", selected = uiState.selectedSort == TodoSort.CREATED_ASC, onClick = { viewModel.setSort(TodoSort.CREATED_ASC) })
             TodoFilterButton(text = "수정순", selected = uiState.selectedSort == TodoSort.UPDATED_DESC, onClick = { viewModel.setSort(TodoSort.UPDATED_DESC) })
+            TodoFilterButton(text = "중요순", selected = uiState.selectedSort == TodoSort.PRIORITY_DESC, onClick = { viewModel.setSort(TodoSort.PRIORITY_DESC) })
         }
         if (uiState.completedCount > 0) {
             TextButton(
@@ -716,6 +729,42 @@ private fun TodoEmptyState(
     }
 }
 
+private fun priorityLabel(priority: Int): String = when (priority) {
+    0 -> "낮음"
+    1 -> "보통"
+    else -> "높음"
+}
+
+private fun priorityColor(priority: Int, colorScheme: androidx.compose.material3.ColorScheme): androidx.compose.ui.graphics.Color = when (priority) {
+    0 -> colorScheme.secondaryContainer
+    1 -> colorScheme.surfaceVariant
+    else -> colorScheme.errorContainer
+}
+
+@Composable
+private fun PriorityLabel(priority: Int) {
+    val label = priorityLabel(priority)
+    val backgroundColor = when (priority) {
+        0 -> MaterialTheme.colorScheme.secondaryContainer
+        1 -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.errorContainer
+    }
+    val textColor = when (priority) {
+        0 -> MaterialTheme.colorScheme.onSecondaryContainer
+        1 -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onErrorContainer
+    }
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = textColor,
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(backgroundColor)
+            .padding(horizontal = 6.dp, vertical = 3.dp)
+    )
+}
+
 @Composable
 private fun TodoFilterButton(
     text: String,
@@ -794,7 +843,7 @@ private fun TodoRow(
                     )
                 }
             }
-
+            PriorityLabel(priority = todo.priority)
         }
     }
 }
@@ -804,11 +853,13 @@ private fun TodoEditDialog(
     title: String,
     initialValue: String,
     initialMemo: String,
+    initialPriority: Int,
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
+    onConfirm: (String, String, Int) -> Unit
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
     var memo by remember(initialMemo) { mutableStateOf(initialMemo) }
+    var priority by remember(initialPriority) { mutableStateOf(initialPriority) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -830,11 +881,30 @@ private fun TodoEditDialog(
                     minLines = 2,
                     maxLines = 4
                 )
+                Text(
+                    text = "중요도",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(0 to "낮음", 1 to "보통", 2 to "높음").forEach { (value, label) ->
+                        OutlinedButton(
+                            onClick = { priority = value },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(label, fontSize = 12.sp)
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text, memo) },
+                onClick = { onConfirm(text, memo, priority) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")
@@ -854,12 +924,14 @@ private fun TodoUpdateDialog(
     initialValue: String,
     initialMemo: String,
     initialScheduledDate: Long,
+    initialPriority: Int,
     onDismiss: () -> Unit,
-    onConfirm: (String, Long, String) -> Unit
+    onConfirm: (String, Long, String, Int) -> Unit
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
     var memo by remember(initialMemo) { mutableStateOf(initialMemo) }
     var scheduledDate by remember(initialScheduledDate) { mutableStateOf(initialScheduledDate) }
+    var priority by remember(initialPriority) { mutableStateOf(initialPriority) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -881,6 +953,25 @@ private fun TodoUpdateDialog(
                     minLines = 2,
                     maxLines = 4
                 )
+                Text(
+                    text = "중요도",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(0 to "낮음", 1 to "보통", 2 to "높음").forEach { (value, label) ->
+                        OutlinedButton(
+                            onClick = { priority = value },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(label, fontSize = 12.sp)
+                        }
+                    }
+                }
                 Text(
                     text = "예정일 ${formatDate(scheduledDate)}",
                     style = MaterialTheme.typography.bodyMedium
@@ -912,7 +1003,7 @@ private fun TodoUpdateDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text, scheduledDate, memo) },
+                onClick = { onConfirm(text, scheduledDate, memo, priority) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")
@@ -962,6 +1053,10 @@ private fun TodoDetailDialog(
                 HorizontalDivider(modifier = Modifier.padding(bottom = 4.dp))
                 // 정보 행
                 DetailInfoRow(label = "예정일", value = formatDate(todo.scheduledDate))
+                DetailInfoRow(
+                    label = "중요도",
+                    value = priorityLabel(todo.priority)
+                )
                 DetailInfoRow(
                     label = "상태",
                     value = if (todo.isCompleted) "완료" else "진행중"

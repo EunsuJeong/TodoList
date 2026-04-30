@@ -13,5 +13,6 @@ data class TodoEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val scheduledDate: Long = todayStartOfDayMillis(),
-    val memo: String? = null
+    val memo: String? = null,
+    val priority: Int = 1
 )
