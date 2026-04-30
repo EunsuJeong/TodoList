@@ -544,7 +544,8 @@ private fun SearchTabContent(
             TodoEmptyState(
                 searchQuery = uiState.searchQuery,
                 selectedFilter = uiState.selectedFilter,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                conditionSummary = conditionSummary
             )
         } else {
             LazyColumn(
@@ -741,7 +742,8 @@ private fun CalendarDayCell(
 private fun TodoEmptyState(
     searchQuery: String,
     selectedFilter: TodoFilter,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    conditionSummary: String? = null
 ) {
     val (icon, title, subtitle) = when {
         searchQuery.trim().isNotEmpty() -> Triple(
@@ -787,6 +789,13 @@ private fun TodoEmptyState(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (conditionSummary != null) {
+                Text(
+                    text = "현재 조건: $conditionSummary",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
