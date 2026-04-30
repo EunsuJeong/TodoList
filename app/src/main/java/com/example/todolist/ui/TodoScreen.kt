@@ -23,6 +23,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
@@ -77,6 +80,9 @@ private fun formatCalendarA11yDate(millis: Long): String =
 
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
+enum class TodoMainTab { TODO, CALENDAR, SEARCH }
+
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TodoScreen(viewModel: TodoViewModel) {
@@ -87,196 +93,69 @@ fun TodoScreen(viewModel: TodoViewModel) {
     var editingTodoMemo by remember { mutableStateOf("") }
     var editingTodoScheduledDate by remember { mutableStateOf(todayStartOfDayMillis()) }
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
+    var selectedTab by rememberSaveable { mutableStateOf(TodoMainTab.TODO) }
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Todo List") })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
-                Text("+")
+            if (selectedTab == TodoMainTab.TODO) {
+                FloatingActionButton(onClick = { showAddDialog = true }) {
+                    Text("+")
+                }
+            }
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = selectedTab == TodoMainTab.TODO,
+                    onClick = { selectedTab = TodoMainTab.TODO },
+                    icon = {},
+                    label = { Text("할 일") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == TodoMainTab.CALENDAR,
+                    onClick = { selectedTab = TodoMainTab.CALENDAR },
+                    icon = {},
+                    label = { Text("달력") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == TodoMainTab.SEARCH,
+                    onClick = { selectedTab = TodoMainTab.SEARCH },
+                    icon = {},
+                    label = { Text("검색") }
+                )
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Row(
+        when (selectedTab) {
+            TodoMainTab.TODO -> TodoListTabContent(
+                uiState = uiState,
+                viewModel = viewModel,
+                onViewDetail = { selectedDetailTodo = it },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = { viewModel.goToPreviousMonth() }) {
-                    Text("◀")
-                }
-                Text(
-                    text = formatMonth(uiState.visibleMonth),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                TextButton(onClick = { viewModel.goToNextMonth() }) {
-                    Text("▶")
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                OutlinedButton(onClick = { viewModel.goToToday() }) {
-                    Text("오늘")
-                }
-            }
-
-            MonthlyCalendar(
-                visibleMonth = uiState.visibleMonth,
-                selectedDate = uiState.selectedDate,
-                datesWithTodos = uiState.datesWithTodos,
-                overdueDates = uiState.overdueDates,
-                onDateSelected = viewModel::setSelectedDate,
-                modifier = Modifier.padding(bottom = 8.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
-
-            HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
-
-            Row(
+            TodoMainTab.CALENDAR -> CalendarTabContent(
+                uiState = uiState,
+                viewModel = viewModel,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatDate(uiState.selectedDate),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // 검색어 입력창
-            Row(
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            TodoMainTab.SEARCH -> SearchTabContent(
+                uiState = uiState,
+                viewModel = viewModel,
+                onViewDetail = { selectedDetailTodo = it },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = { viewModel.setSearchQuery(it) },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    label = { Text("할 일 검색") },
-                    placeholder = { Text("제목 검색") }
-                )
-                if (uiState.searchQuery.isNotEmpty()) {
-                    TextButton(onClick = { viewModel.clearSearchQuery() }) {
-                        Text("✕")
-                    }
-                }
-            }
-
-            if (uiState.searchQuery.trim().isNotEmpty()) {
-                Text(
-                    text = "검색 결과 ${uiState.searchResultCount}개",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TodoFilterButton(
-                    text = "전체",
-                    selected = uiState.selectedFilter == TodoFilter.ALL,
-                    onClick = { viewModel.setFilter(TodoFilter.ALL) }
-                )
-                TodoFilterButton(
-                    text = "진행중",
-                    selected = uiState.selectedFilter == TodoFilter.ACTIVE,
-                    onClick = { viewModel.setFilter(TodoFilter.ACTIVE) }
-                )
-                TodoFilterButton(
-                    text = "완료",
-                    selected = uiState.selectedFilter == TodoFilter.COMPLETED,
-                    onClick = { viewModel.setFilter(TodoFilter.COMPLETED) }
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TodoFilterButton(
-                    text = "최신순",
-                    selected = uiState.selectedSort == TodoSort.CREATED_DESC,
-                    onClick = { viewModel.setSort(TodoSort.CREATED_DESC) }
-                )
-                TodoFilterButton(
-                    text = "오래된순",
-                    selected = uiState.selectedSort == TodoSort.CREATED_ASC,
-                    onClick = { viewModel.setSort(TodoSort.CREATED_ASC) }
-                )
-                TodoFilterButton(
-                    text = "수정순",
-                    selected = uiState.selectedSort == TodoSort.UPDATED_DESC,
-                    onClick = { viewModel.setSort(TodoSort.UPDATED_DESC) }
-                )
-            }
-
-            if (uiState.completedCount > 0) {
-                TextButton(
-                    onClick = { viewModel.clearCompletedTodos() },
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    Text(
-                        text = "완료 항목 삭제 (${uiState.completedCount})",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            if (uiState.todos.isEmpty()) {
-                TodoEmptyState(
-                    searchQuery = uiState.searchQuery,
-                    selectedFilter = uiState.selectedFilter,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(
-                        items = uiState.todos,
-                        key = { it.id }
-                    ) { todo ->
-                        TodoRow(
-                            todo = todo,
-                            onToggle = { viewModel.toggleTodo(todo) },
-                            onViewDetail = { selectedDetailTodo = todo }
-                        )
-                    }
-                }
-            }
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
         }
     }
 
@@ -338,6 +217,198 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 editingTodoScheduledDate = todayStartOfDayMillis()
             }
         )
+    }
+}
+
+@Composable
+private fun TodoListTabContent(
+    uiState: TodoUiState,
+    viewModel: TodoViewModel,
+    onViewDetail: (TodoEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = formatDate(uiState.selectedDate),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TodoFilterButton(text = "전체", selected = uiState.selectedFilter == TodoFilter.ALL, onClick = { viewModel.setFilter(TodoFilter.ALL) })
+            TodoFilterButton(text = "진행중", selected = uiState.selectedFilter == TodoFilter.ACTIVE, onClick = { viewModel.setFilter(TodoFilter.ACTIVE) })
+            TodoFilterButton(text = "완료", selected = uiState.selectedFilter == TodoFilter.COMPLETED, onClick = { viewModel.setFilter(TodoFilter.COMPLETED) })
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TodoFilterButton(text = "최신순", selected = uiState.selectedSort == TodoSort.CREATED_DESC, onClick = { viewModel.setSort(TodoSort.CREATED_DESC) })
+            TodoFilterButton(text = "오래된순", selected = uiState.selectedSort == TodoSort.CREATED_ASC, onClick = { viewModel.setSort(TodoSort.CREATED_ASC) })
+            TodoFilterButton(text = "수정순", selected = uiState.selectedSort == TodoSort.UPDATED_DESC, onClick = { viewModel.setSort(TodoSort.UPDATED_DESC) })
+        }
+        if (uiState.completedCount > 0) {
+            TextButton(
+                onClick = { viewModel.clearCompletedTodos() },
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Text(
+                    text = "완료 항목 삭제 (${uiState.completedCount})",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (uiState.todos.isEmpty()) {
+            TodoEmptyState(
+                searchQuery = "",
+                selectedFilter = uiState.selectedFilter,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(items = uiState.todos, key = { it.id }) { todo ->
+                    TodoRow(
+                        todo = todo,
+                        onToggle = { viewModel.toggleTodo(todo) },
+                        onViewDetail = { onViewDetail(todo) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarTabContent(
+    uiState: TodoUiState,
+    viewModel: TodoViewModel,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = { viewModel.goToPreviousMonth() }) { Text("◀") }
+            Text(text = formatMonth(uiState.visibleMonth), style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = { viewModel.goToNextMonth() }) { Text("▶") }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            OutlinedButton(onClick = { viewModel.goToToday() }) { Text("오늘") }
+        }
+        MonthlyCalendar(
+            visibleMonth = uiState.visibleMonth,
+            selectedDate = uiState.selectedDate,
+            datesWithTodos = uiState.datesWithTodos,
+            overdueDates = uiState.overdueDates,
+            onDateSelected = viewModel::setSelectedDate,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = formatDate(uiState.selectedDate),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchTabContent(
+    uiState: TodoUiState,
+    viewModel: TodoViewModel,
+    onViewDetail: (TodoEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.setSearchQuery(it) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                label = { Text("할 일 검색") },
+                placeholder = { Text("제목 또는 메모 검색") }
+            )
+            if (uiState.searchQuery.isNotEmpty()) {
+                TextButton(onClick = { viewModel.clearSearchQuery() }) { Text("✕") }
+            }
+        }
+        if (uiState.searchQuery.trim().isNotEmpty()) {
+            Text(
+                text = "검색 결과 ${uiState.searchResultCount}개",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+        if (uiState.todos.isEmpty()) {
+            TodoEmptyState(
+                searchQuery = uiState.searchQuery,
+                selectedFilter = uiState.selectedFilter,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(items = uiState.todos, key = { it.id }) { todo ->
+                    TodoRow(
+                        todo = todo,
+                        onToggle = { viewModel.toggleTodo(todo) },
+                        onViewDetail = { onViewDetail(todo) }
+                    )
+                }
+            }
+        }
     }
 }
 
