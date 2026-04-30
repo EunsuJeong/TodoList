@@ -142,6 +142,14 @@ fun TodoScreen(viewModel: TodoViewModel) {
             TodoMainTab.CALENDAR -> CalendarTabContent(
                 uiState = uiState,
                 viewModel = viewModel,
+                onDateSelected = { selectedDate ->
+                    viewModel.setSelectedDate(selectedDate)
+                    selectedTab = TodoMainTab.TODO
+                },
+                onGoToToday = {
+                    viewModel.goToToday()
+                    selectedTab = TodoMainTab.TODO
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -305,6 +313,8 @@ private fun TodoListTabContent(
 private fun CalendarTabContent(
     uiState: TodoUiState,
     viewModel: TodoViewModel,
+    onDateSelected: (Long) -> Unit,
+    onGoToToday: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -325,14 +335,14 @@ private fun CalendarTabContent(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            OutlinedButton(onClick = { viewModel.goToToday() }) { Text("오늘") }
+            OutlinedButton(onClick = onGoToToday) { Text("오늘") }
         }
         MonthlyCalendar(
             visibleMonth = uiState.visibleMonth,
             selectedDate = uiState.selectedDate,
             datesWithTodos = uiState.datesWithTodos,
             overdueDates = uiState.overdueDates,
-            onDateSelected = viewModel::setSelectedDate,
+            onDateSelected = onDateSelected,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
