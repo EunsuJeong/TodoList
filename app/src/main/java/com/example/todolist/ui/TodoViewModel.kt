@@ -54,6 +54,7 @@ data class TodoUiState(
     val visibleMonth: Long = 0L,
     val datesWithTodos: Set<Long> = emptySet(),
     val overdueDates: Set<Long> = emptySet(),
+    val completedOnlyDates: Set<Long> = emptySet(),
     val searchQuery: String = "",
     val searchResultCount: Int = 0,
     val todayActiveCount: Int = 0,
@@ -76,7 +77,8 @@ private data class BaseTodosState(
     val selectedDate: Long,
     val visibleMonth: Long,
     val datesWithTodos: Set<Long>,
-    val overdueDates: Set<Long>
+    val overdueDates: Set<Long>,
+    val completedOnlyDates: Set<Long>
 )
 
 class TodoViewModel(private val repository: TodoRepository, private val preferences: TodoViewPreferences) : ViewModel() {
@@ -106,6 +108,11 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             .filter { !it.isCompleted && it.scheduledDate < today }
             .map { it.scheduledDate }
             .toSet()
+        val completedOnlyDates = todos
+            .groupBy { it.scheduledDate }
+            .filter { (_, list) -> list.isNotEmpty() && list.all { it.isCompleted } }
+            .keys
+            .toSet()
         val statusFilteredDate = when (filter) {
             TodoFilter.ALL -> dateTodos
             TodoFilter.ACTIVE -> dateTodos.filter { !it.isCompleted }
@@ -129,7 +136,8 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             selectedDate = date,
             visibleMonth = month,
             datesWithTodos = datesWithTodos,
-            overdueDates = overdueDates
+            overdueDates = overdueDates,
+            completedOnlyDates = completedOnlyDates
         )
     }.combine(_selectedPriorityFilter) { base, priorityFilter ->
         val priorityFilteredDate = when (priorityFilter) {
@@ -204,6 +212,7 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             visibleMonth = base.visibleMonth,
             datesWithTodos = base.datesWithTodos,
             overdueDates = base.overdueDates,
+            completedOnlyDates = base.completedOnlyDates,
             searchQuery = inputQuery,
             searchResultCount = sortedSearchTodos.size,
             todayActiveCount = todayActiveCount,

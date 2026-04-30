@@ -396,6 +396,7 @@ private fun CalendarTabContent(
             selectedDate = uiState.selectedDate,
             datesWithTodos = uiState.datesWithTodos,
             overdueDates = uiState.overdueDates,
+            completedOnlyDates = uiState.completedOnlyDates,
             onDateSelected = onDateSelected,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -632,6 +633,7 @@ private fun MonthlyCalendar(
     selectedDate: Long,
     datesWithTodos: Set<Long>,
     overdueDates: Set<Long>,
+    completedOnlyDates: Set<Long>,
     onDateSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -686,6 +688,7 @@ private fun MonthlyCalendar(
                             isToday = dateMillis == today,
                             hasTodos = datesWithTodos.contains(dateMillis),
                             hasOverdueTodo = overdueDates.contains(dateMillis),
+                            isCompletedOnly = completedOnlyDates.contains(dateMillis),
                             onClick = { onDateSelected(dateMillis) },
                             modifier = Modifier.weight(1f)
                         )
@@ -711,6 +714,7 @@ private fun CalendarDayCell(
     isToday: Boolean,
     hasTodos: Boolean,
     hasOverdueTodo: Boolean,
+    isCompletedOnly: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -737,16 +741,19 @@ private fun CalendarDayCell(
     } else {
         baseTextColor
     }
-    // 점 색상 (overdue 우선)
-    val defaultDotColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-    } else {
-        MaterialTheme.colorScheme.primary
-    }
-    val dotColor = if (hasOverdueTodo) {
-        MaterialTheme.colorScheme.error
-    } else {
-        defaultDotColor
+    // 점 색상 (overdue 우선, 그 다음 완료만 있는 날짜 구분)
+    val dotColor = when {
+        hasOverdueTodo -> MaterialTheme.colorScheme.error
+        isCompletedOnly -> if (isSelected) {
+            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f)
+        } else {
+            MaterialTheme.colorScheme.outline
+        }
+        else -> if (isSelected) {
+            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+        } else {
+            MaterialTheme.colorScheme.primary
+        }
     }
     val todayLabel = stringResource(id = R.string.calendar_accessibility_today)
     val selectedLabel = stringResource(id = R.string.calendar_accessibility_selected)

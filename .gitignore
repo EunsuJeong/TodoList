@@ -14,3 +14,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# TTdoList APK builds
+TTdoList_ver*.apk
