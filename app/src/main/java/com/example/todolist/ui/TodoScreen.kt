@@ -78,6 +78,9 @@ private fun formatMonth(millis: Long): String =
 private fun formatCalendarA11yDate(millis: Long): String =
     SimpleDateFormat("yyyy년 M월 d일", Locale.getDefault()).format(Date(millis))
 
+private fun formatKoreanDateWithDay(millis: Long): String =
+    SimpleDateFormat("yyyy년 M월 d일 EEEE", Locale.KOREAN).format(Date(millis))
+
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
 enum class TodoMainTab { TODO, CALENDAR, SEARCH }
@@ -236,24 +239,15 @@ private fun TodoListTabContent(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Row(
+        SelectedDateHeader(
+            selectedDate = uiState.selectedDate,
+            totalCount = uiState.totalCount,
+            activeCount = uiState.activeCount,
+            completedCount = uiState.completedCount,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = formatDate(uiState.selectedDate),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+                .padding(bottom = 12.dp)
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -358,6 +352,73 @@ private fun CalendarTabContent(
             )
             Text(
                 text = "전체 ${uiState.totalCount}개 · 진행중 ${uiState.activeCount}개 · 완료 ${uiState.completedCount}개",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectedDateHeader(
+    selectedDate: Long,
+    totalCount: Int,
+    activeCount: Int,
+    completedCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val today = todayStartOfDayMillis()
+    val (statusLabel, statusContainerColor, statusTextColor) = when {
+        selectedDate == today -> Triple(
+            "오늘",
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        selectedDate < today -> Triple(
+            "지난 날짜",
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer
+        )
+        else -> Triple(
+            "예정 날짜",
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    }
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = formatKoreanDateWithDay(selectedDate),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = statusLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = statusTextColor,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(statusContainerColor)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+            Text(
+                text = "전체 ${totalCount}개 · 진행중 ${activeCount}개 · 완료 ${completedCount}개",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
