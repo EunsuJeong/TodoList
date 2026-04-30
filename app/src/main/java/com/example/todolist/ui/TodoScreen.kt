@@ -136,82 +136,14 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
             }
         },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = selectedTab == TodoMainTab.TODO,
-                    modifier = Modifier.semantics {
-                        if (selectedTab == TodoMainTab.TODO) {
-                            stateDescription = "선택됨"
-                        }
-                    },
-                    onClick = { 
-                        selectedTab = TodoMainTab.TODO
-                        preferences.saveMainTab(TodoMainTab.TODO)
-                    },
-                    icon = {},
-                    label = {
-                        BadgedBox(
-                            modifier = Modifier.clearAndSetSemantics {
-                                contentDescription = formatBottomTabA11yLabel(
-                                    tabName = "할 일",
-                                    overdueCount = uiState.overdueActiveCount
-                                )
-                            },
-                            badge = {
-                                if (uiState.overdueActiveCount > 0) {
-                                    Badge {
-                                        Text(formatOverdueBadgeCount(uiState.overdueActiveCount))
-                                    }
-                                }
-                            }
-                        ) {
-                            Text("할 일")
-                        }
-                    }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == TodoMainTab.CALENDAR,
-                    modifier = Modifier.semantics {
-                        if (selectedTab == TodoMainTab.CALENDAR) {
-                            stateDescription = "선택됨"
-                        }
-                    },
-                    onClick = { 
-                        selectedTab = TodoMainTab.CALENDAR
-                        preferences.saveMainTab(TodoMainTab.CALENDAR)
-                    },
-                    icon = {},
-                    label = {
-                        Text(
-                            text = "달력",
-                            modifier = Modifier.clearAndSetSemantics {
-                                contentDescription = formatBottomTabA11yLabel(tabName = "달력")
-                            }
-                        )
-                    }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == TodoMainTab.SEARCH,
-                    modifier = Modifier.semantics {
-                        if (selectedTab == TodoMainTab.SEARCH) {
-                            stateDescription = "선택됨"
-                        }
-                    },
-                    onClick = { 
-                        selectedTab = TodoMainTab.SEARCH
-                        preferences.saveMainTab(TodoMainTab.SEARCH)
-                    },
-                    icon = {},
-                    label = {
-                        Text(
-                            text = "검색",
-                            modifier = Modifier.clearAndSetSemantics {
-                                contentDescription = formatBottomTabA11yLabel(tabName = "검색")
-                            }
-                        )
-                    }
-                )
-            }
+            BottomNavigationSection(
+                selectedTab = selectedTab,
+                overdueActiveCount = uiState.overdueActiveCount,
+                onTabSelected = { tab ->
+                    selectedTab = tab
+                    preferences.saveMainTab(tab)
+                }
+            )
         }
     ) { innerPadding ->
         when (selectedTab) {
@@ -328,6 +260,81 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                 editingTodoScheduledDate = todayStartOfDayMillis()
                 editingTodoPriority = 1
                 editingTodoRepeatType = 0
+            }
+        )
+    }
+}
+
+@Composable
+internal fun BottomNavigationSection(
+    selectedTab: TodoMainTab,
+    overdueActiveCount: Int,
+    onTabSelected: (TodoMainTab) -> Unit
+) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = selectedTab == TodoMainTab.TODO,
+            modifier = Modifier.semantics {
+                if (selectedTab == TodoMainTab.TODO) {
+                    stateDescription = "선택됨"
+                }
+            },
+            onClick = { onTabSelected(TodoMainTab.TODO) },
+            icon = {},
+            label = {
+                BadgedBox(
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = formatBottomTabA11yLabel(
+                            tabName = "할 일",
+                            overdueCount = overdueActiveCount
+                        )
+                    },
+                    badge = {
+                        if (overdueActiveCount > 0) {
+                            Badge {
+                                Text(formatOverdueBadgeCount(overdueActiveCount))
+                            }
+                        }
+                    }
+                ) {
+                    Text("할 일")
+                }
+            }
+        )
+        NavigationBarItem(
+            selected = selectedTab == TodoMainTab.CALENDAR,
+            modifier = Modifier.semantics {
+                if (selectedTab == TodoMainTab.CALENDAR) {
+                    stateDescription = "선택됨"
+                }
+            },
+            onClick = { onTabSelected(TodoMainTab.CALENDAR) },
+            icon = {},
+            label = {
+                Text(
+                    text = "달력",
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = formatBottomTabA11yLabel(tabName = "달력")
+                    }
+                )
+            }
+        )
+        NavigationBarItem(
+            selected = selectedTab == TodoMainTab.SEARCH,
+            modifier = Modifier.semantics {
+                if (selectedTab == TodoMainTab.SEARCH) {
+                    stateDescription = "선택됨"
+                }
+            },
+            onClick = { onTabSelected(TodoMainTab.SEARCH) },
+            icon = {},
+            label = {
+                Text(
+                    text = "검색",
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = formatBottomTabA11yLabel(tabName = "검색")
+                    }
+                )
             }
         )
     }
