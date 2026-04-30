@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.todolist.data.local.TodoDatabase
+import com.example.todolist.data.preferences.TodoViewPreferences
 import com.example.todolist.data.repository.TodoRepository
 import com.example.todolist.ui.TodoScreen
 import com.example.todolist.ui.TodoViewModel
@@ -19,15 +20,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val repository = TodoRepository(TodoDatabase.getInstance(applicationContext).todoDao())
+        val preferences = TodoViewPreferences(applicationContext)
 
         setContent {
             val viewModel: TodoViewModel = viewModel(
-                factory = TodoViewModelFactory(repository)
+                factory = TodoViewModelFactory(repository, preferences)
             )
 
             MaterialTheme {
                 Surface {
-                    TodoScreen(viewModel = viewModel)
+                    TodoScreen(viewModel = viewModel, preferences = preferences)
                 }
             }
         }
