@@ -41,6 +41,19 @@ interface TodoDao {
     @Query("DELETE FROM todos WHERE isCompleted = 1 AND scheduledDate = :date")
     suspend fun clearCompletedTodosForDate(date: Long)
 
+    @Query("""
+        SELECT COUNT(*) FROM todos
+        WHERE title = :title
+        AND scheduledDate = :scheduledDate
+        AND repeatType = :repeatType
+        AND isCompleted = 0
+    """)
+    suspend fun countActiveRecurringCandidate(
+        title: String,
+        scheduledDate: Long,
+        repeatType: Int
+    ): Int
+
     @Delete
     suspend fun deleteTodo(todo: TodoEntity)
 }

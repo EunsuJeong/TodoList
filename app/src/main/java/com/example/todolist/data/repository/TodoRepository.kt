@@ -63,19 +63,26 @@ class TodoRepository(private val todoDao: TodoDao) {
         if (nowCompleting && todo.repeatType != 0) {
             val nextDate = nextRepeatDateMillis(todo.scheduledDate, todo.repeatType)
             if (nextDate != null) {
-                val now = System.currentTimeMillis()
-                todoDao.insertTodo(
-                    TodoEntity(
-                        title = todo.title,
-                        memo = todo.memo,
-                        priority = todo.priority,
-                        repeatType = todo.repeatType,
-                        isCompleted = false,
-                        scheduledDate = nextDate,
-                        createdAt = now,
-                        updatedAt = now
-                    )
+                val existing = todoDao.countActiveRecurringCandidate(
+                    title = todo.title,
+                    scheduledDate = nextDate,
+                    repeatType = todo.repeatType
                 )
+                if (existing == 0) {
+                    val now = System.currentTimeMillis()
+                    todoDao.insertTodo(
+                        TodoEntity(
+                            title = todo.title,
+                            memo = todo.memo,
+                            priority = todo.priority,
+                            repeatType = todo.repeatType,
+                            isCompleted = false,
+                            scheduledDate = nextDate,
+                            createdAt = now,
+                            updatedAt = now
+                        )
+                    )
+                }
             }
         }
     }
