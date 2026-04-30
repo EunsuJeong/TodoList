@@ -255,24 +255,11 @@ fun TodoScreen(viewModel: TodoViewModel) {
             }
 
             if (uiState.todos.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (uiState.searchQuery.trim().isNotEmpty()) {
-                            "검색 결과가 없습니다."
-                        } else {
-                            when (uiState.selectedFilter) {
-                                TodoFilter.ALL -> "이 날짜에 등록된 할 일이 없습니다."
-                                TodoFilter.ACTIVE -> "이 날짜에 진행중인 할 일이 없습니다."
-                                TodoFilter.COMPLETED -> "이 날짜에 완료된 할 일이 없습니다."
-                            }
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                TodoEmptyState(
+                    searchQuery = uiState.searchQuery,
+                    selectedFilter = uiState.selectedFilter,
+                    modifier = Modifier.fillMaxSize()
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -522,6 +509,60 @@ private fun CalendarDayCell(
                     .size(5.dp)
                     .clip(CircleShape)
                     .background(if (hasTodos || hasOverdueTodo) dotColor else Color.Transparent)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TodoEmptyState(
+    searchQuery: String,
+    selectedFilter: TodoFilter,
+    modifier: Modifier = Modifier
+) {
+    val (icon, title, subtitle) = when {
+        searchQuery.trim().isNotEmpty() -> Triple(
+            "🔍",
+            "검색 결과가 없습니다.",
+            "검색어를 바꾸거나 필터를 확인해보세요."
+        )
+        selectedFilter == TodoFilter.ACTIVE -> Triple(
+            "📝",
+            "진행중인 할 일이 없습니다.",
+            "새 할 일을 추가하거나 완료된 항목을 확인해보세요."
+        )
+        selectedFilter == TodoFilter.COMPLETED -> Triple(
+            "✓",
+            "완료된 할 일이 없습니다.",
+            "완료 체크한 할 일이 여기에 표시됩니다."
+        )
+        else -> Triple(
+            "📝",
+            "아직 등록된 할 일이 없습니다.",
+            "오른쪽 아래 + 버튼으로 새 할 일을 추가해보세요."
+        )
+    }
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
