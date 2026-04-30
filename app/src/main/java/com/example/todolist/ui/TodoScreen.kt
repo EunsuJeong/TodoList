@@ -787,69 +787,43 @@ private fun TodoDetailDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Todo 상세") },
+        title = {
+            Text(
+                text = todo.title,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "제목",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = todo.title,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // 메모 섹션
                 if (!todo.memo.isNullOrEmpty()) {
                     Text(
-                        text = "메모",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
                         text = todo.memo,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                } else {
+                    Text(
+                        text = "메모 없음",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                Text(
-                    text = "예정일",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                HorizontalDivider(modifier = Modifier.padding(bottom = 4.dp))
+                // 정보 행
+                DetailInfoRow(label = "예정일", value = formatDate(todo.scheduledDate))
+                DetailInfoRow(
+                    label = "상태",
+                    value = if (todo.isCompleted) "완료" else "진행중"
                 )
-                Text(
-                    text = formatDate(todo.scheduledDate),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "완료 여부",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = if (todo.isCompleted) "완료" else "진행중",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "생성일",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = formatDateTime(todo.createdAt),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "수정일",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = formatDateTime(todo.updatedAt),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                DetailInfoRow(label = "생성일", value = formatDateTime(todo.createdAt))
+                DetailInfoRow(label = "수정일", value = formatDateTime(todo.updatedAt))
             }
         },
         confirmButton = {
-            TextButton(onClick = onEdit) {
+            Button(onClick = onEdit) {
                 Text("수정")
             }
         },
@@ -870,4 +844,28 @@ private fun TodoDetailDialog(
             }
         }
     )
+}
+
+@Composable
+private fun DetailInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(0.35f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(0.65f)
+        )
+    }
 }
