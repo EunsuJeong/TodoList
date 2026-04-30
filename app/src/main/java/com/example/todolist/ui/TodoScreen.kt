@@ -279,6 +279,7 @@ private fun TodoListTabContent(
             todayActiveCount = uiState.todayActiveCount,
             todayCompletedCount = uiState.todayCompletedCount,
             overdueActiveCount = uiState.overdueActiveCount,
+            onClick = { viewModel.goToToday() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
@@ -420,9 +421,11 @@ private fun TodaySummaryCard(
     todayActiveCount: Int,
     todayCompletedCount: Int,
     overdueActiveCount: Int,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
