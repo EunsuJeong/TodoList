@@ -275,6 +275,14 @@ private fun TodoListTabContent(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
+        TodaySummaryCard(
+            todayActiveCount = uiState.todayActiveCount,
+            todayCompletedCount = uiState.todayCompletedCount,
+            overdueActiveCount = uiState.overdueActiveCount,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
         SelectedDateHeader(
             selectedDate = uiState.selectedDate,
             totalCount = uiState.totalCount,
@@ -403,6 +411,39 @@ private fun CalendarTabContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun TodaySummaryCard(
+    todayActiveCount: Int,
+    todayCompletedCount: Int,
+    overdueActiveCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "오늘 진행중 ${todayActiveCount}개 · 완료 ${todayCompletedCount}개",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (overdueActiveCount > 0) {
+                Text(
+                    text = "⚠️ 지난 일정 ${overdueActiveCount}개",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

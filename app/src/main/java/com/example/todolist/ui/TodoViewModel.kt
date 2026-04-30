@@ -55,7 +55,10 @@ data class TodoUiState(
     val datesWithTodos: Set<Long> = emptySet(),
     val overdueDates: Set<Long> = emptySet(),
     val searchQuery: String = "",
-    val searchResultCount: Int = 0
+    val searchResultCount: Int = 0,
+    val todayActiveCount: Int = 0,
+    val todayCompletedCount: Int = 0,
+    val overdueActiveCount: Int = 0
 )
 
 /** combine() 중간 결과 – 검색 이전 단계의 상태를 전달하기 위한 내부 데이터 클래스 */
@@ -179,6 +182,11 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         val sortedTodoTabTodos = sortTodos(todoTabSearchFiltered)
         val sortedSearchTodos = sortTodos(globalSearchFiltered)
 
+        val today = todayStartOfDayMillis()
+        val todayActiveCount = base.allTodos.count { it.scheduledDate == today && !it.isCompleted }
+        val todayCompletedCount = base.allTodos.count { it.scheduledDate == today && it.isCompleted }
+        val overdueActiveCount = base.allTodos.count { it.scheduledDate < today && !it.isCompleted }
+
         TodoUiState(
             todos = sortedTodoTabTodos,
             searchTodos = sortedSearchTodos,
@@ -193,7 +201,10 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             datesWithTodos = base.datesWithTodos,
             overdueDates = base.overdueDates,
             searchQuery = inputQuery,
-            searchResultCount = sortedSearchTodos.size
+            searchResultCount = sortedSearchTodos.size,
+            todayActiveCount = todayActiveCount,
+            todayCompletedCount = todayCompletedCount,
+            overdueActiveCount = overdueActiveCount
         )
     }
         .stateIn(
