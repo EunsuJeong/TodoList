@@ -31,10 +31,18 @@ enum class TodoSort {
     PRIORITY_DESC
 }
 
+enum class TodoPriorityFilter {
+    ALL,
+    HIGH,
+    NORMAL,
+    LOW
+}
+
 data class TodoUiState(
     val todos: List<TodoEntity> = emptyList(),
     val selectedFilter: TodoFilter = TodoFilter.ALL,
     val selectedSort: TodoSort = TodoSort.CREATED_DESC,
+    val selectedPriorityFilter: TodoPriorityFilter = TodoPriorityFilter.ALL,
     val totalCount: Int = 0,
     val activeCount: Int = 0,
     val completedCount: Int = 0,
@@ -50,8 +58,10 @@ data class TodoUiState(
 private data class BaseTodosState(
     val dateTodos: List<TodoEntity>,
     val statusFilteredTodos: List<TodoEntity>,
+    val priorityFilteredTodos: List<TodoEntity>,
     val selectedFilter: TodoFilter,
     val selectedSort: TodoSort,
+    val selectedPriorityFilter: TodoPriorityFilter,
     val selectedDate: Long,
     val visibleMonth: Long,
     val datesWithTodos: Set<Long>,
@@ -61,6 +71,7 @@ private data class BaseTodosState(
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
     private val selectedFilter = MutableStateFlow(TodoFilter.ALL)
     private val selectedSort = MutableStateFlow(TodoSort.CREATED_DESC)
+    private val _selectedPriorityFilter = MutableStateFlow(TodoPriorityFilter.ALL)
     private val _selectedDate = MutableStateFlow(todayStartOfDayMillis())
     private val visibleMonth = MutableStateFlow(monthStartMillis(todayStartOfDayMillis()))
     private val _searchQuery = MutableStateFlow("")
@@ -84,19 +95,32 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         BaseTodosState(
             dateTodos = dateTodos,
             statusFilteredTodos = statusFiltered,
+            priorityFilteredTodos = statusFiltered,
             selectedFilter = filter,
             selectedSort = sort,
+            selectedPriorityFilter = TodoPriorityFilter.ALL,
             selectedDate = date,
             visibleMonth = month,
             datesWithTodos = datesWithTodos,
             overdueDates = overdueDates
         )
+    }.combine(_selectedPriorityFilter) { base, priorityFilter ->
+        val priorityFiltered = when (priorityFilter) {
+            TodoPriorityFilter.ALL -> base.statusFilteredTodos
+            TodoPriorityFilter.HIGH -> base.statusFilteredTodos.filter { it.priority == 2 }
+            TodoPriorityFilter.NORMAL -> base.statusFilteredTodos.filter { it.priority == 1 }
+            TodoPriorityFilter.LOW -> base.statusFilteredTodos.filter { it.priority == 0 }
+        }
+        base.copy(
+            priorityFilteredTodos = priorityFiltered,
+            selectedPriorityFilter = priorityFilter
+        )
     }.combine(_searchQuery) { base, query ->
         val trimmed = query.trim()
         val searchFiltered = if (trimmed.isEmpty()) {
-            base.statusFilteredTodos
+            base.priorityFilteredTodos
         } else {
-            base.statusFilteredTodos.filter {
+            base.priorityFilteredTodos.filter {
                 it.title.contains(trimmed, ignoreCase = true) ||
                     it.memo?.contains(trimmed, ignoreCase = true) == true
             }
@@ -111,6 +135,7 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
             todos = sortedTodos,
             selectedFilter = base.selectedFilter,
             selectedSort = base.selectedSort,
+            selectedPriorityFilter = base.selectedPriorityFilter,
             totalCount = base.dateTodos.size,
             activeCount = base.dateTodos.count { !it.isCompleted },
             completedCount = base.dateTodos.count { it.isCompleted },
@@ -138,6 +163,10 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
 
     fun setFilter(filter: TodoFilter) {
         selectedFilter.value = filter
+    }
+
+    fun setPriorityFilter(filter: TodoPriorityFilter) {
+        _selectedPriorityFilter.value = filter
     }
 
     fun setSort(sort: TodoSort) {

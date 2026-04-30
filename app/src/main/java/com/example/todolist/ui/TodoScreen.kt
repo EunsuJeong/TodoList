@@ -277,6 +277,17 @@ private fun TodoListTabContent(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            TodoFilterButton(text = "중요도 전체", selected = uiState.selectedPriorityFilter == TodoPriorityFilter.ALL, onClick = { viewModel.setPriorityFilter(TodoPriorityFilter.ALL) })
+            TodoFilterButton(text = "높음", selected = uiState.selectedPriorityFilter == TodoPriorityFilter.HIGH, onClick = { viewModel.setPriorityFilter(TodoPriorityFilter.HIGH) })
+            TodoFilterButton(text = "보통", selected = uiState.selectedPriorityFilter == TodoPriorityFilter.NORMAL, onClick = { viewModel.setPriorityFilter(TodoPriorityFilter.NORMAL) })
+            TodoFilterButton(text = "낮음", selected = uiState.selectedPriorityFilter == TodoPriorityFilter.LOW, onClick = { viewModel.setPriorityFilter(TodoPriorityFilter.LOW) })
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             TodoFilterButton(text = "최신순", selected = uiState.selectedSort == TodoSort.CREATED_DESC, onClick = { viewModel.setSort(TodoSort.CREATED_DESC) })
             TodoFilterButton(text = "오래된순", selected = uiState.selectedSort == TodoSort.CREATED_ASC, onClick = { viewModel.setSort(TodoSort.CREATED_ASC) })
             TodoFilterButton(text = "수정순", selected = uiState.selectedSort == TodoSort.UPDATED_DESC, onClick = { viewModel.setSort(TodoSort.UPDATED_DESC) })
