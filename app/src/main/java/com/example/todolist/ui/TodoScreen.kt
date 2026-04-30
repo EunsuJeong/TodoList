@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -84,6 +86,9 @@ private fun formatCalendarA11yDate(millis: Long): String =
 private fun formatKoreanDateWithDay(millis: Long): String =
     SimpleDateFormat("yyyy년 M월 d일 EEEE", Locale.KOREAN).format(Date(millis))
 
+private fun formatOverdueBadgeCount(count: Int): String =
+    if (count > 9) "9+" else count.toString()
+
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
 enum class TodoMainTab { TODO, CALENDAR, SEARCH }
@@ -125,7 +130,19 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                         preferences.saveMainTab(TodoMainTab.TODO)
                     },
                     icon = {},
-                    label = { Text("할 일") }
+                    label = {
+                        BadgedBox(
+                            badge = {
+                                if (uiState.overdueActiveCount > 0) {
+                                    Badge {
+                                        Text(formatOverdueBadgeCount(uiState.overdueActiveCount))
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("할 일")
+                        }
+                    }
                 )
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.CALENDAR,
