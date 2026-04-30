@@ -58,7 +58,8 @@ data class TodoUiState(
     val searchResultCount: Int = 0,
     val todayActiveCount: Int = 0,
     val todayCompletedCount: Int = 0,
-    val overdueActiveCount: Int = 0
+    val overdueActiveCount: Int = 0,
+    val oldestOverdueDate: Long? = null
 )
 
 /** combine() 중간 결과 – 검색 이전 단계의 상태를 전달하기 위한 내부 데이터 클래스 */
@@ -186,6 +187,9 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         val todayActiveCount = base.allTodos.count { it.scheduledDate == today && !it.isCompleted }
         val todayCompletedCount = base.allTodos.count { it.scheduledDate == today && it.isCompleted }
         val overdueActiveCount = base.allTodos.count { it.scheduledDate < today && !it.isCompleted }
+        val oldestOverdueDate = base.allTodos
+            .filter { it.scheduledDate < today && !it.isCompleted }
+            .minOfOrNull { it.scheduledDate }
 
         TodoUiState(
             todos = sortedTodoTabTodos,
@@ -204,7 +208,8 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             searchResultCount = sortedSearchTodos.size,
             todayActiveCount = todayActiveCount,
             todayCompletedCount = todayCompletedCount,
-            overdueActiveCount = overdueActiveCount
+            overdueActiveCount = overdueActiveCount,
+            oldestOverdueDate = oldestOverdueDate
         )
     }
         .stateIn(
@@ -272,6 +277,10 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
 
     fun goToToday() {
         updateSelectedDate(todayStartOfDayMillis())
+    }
+
+    fun goToOldestOverdueDate(date: Long) {
+        updateSelectedDate(date)
     }
 
     fun addTodo(title: String, memo: String? = null, priority: Int = 1, repeatType: Int = 0) {

@@ -280,6 +280,9 @@ private fun TodoListTabContent(
             todayCompletedCount = uiState.todayCompletedCount,
             overdueActiveCount = uiState.overdueActiveCount,
             onClick = { viewModel.goToToday() },
+            onOverdueClick = uiState.oldestOverdueDate?.let { date ->
+                { viewModel.goToOldestOverdueDate(date) }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
@@ -422,6 +425,7 @@ private fun TodaySummaryCard(
     todayCompletedCount: Int,
     overdueActiveCount: Int,
     onClick: () -> Unit,
+    onOverdueClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -444,7 +448,12 @@ private fun TodaySummaryCard(
                 Text(
                     text = "⚠️ 지난 일정 ${overdueActiveCount}개",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = if (onOverdueClick != null) {
+                        Modifier.clickable(onClick = onOverdueClick)
+                    } else {
+                        Modifier
+                    }
                 )
             }
         }
