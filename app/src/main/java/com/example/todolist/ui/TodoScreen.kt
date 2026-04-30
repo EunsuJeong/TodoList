@@ -198,7 +198,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TodoFilterButton(
@@ -221,7 +221,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TodoFilterButton(
@@ -241,12 +241,17 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 )
             }
 
-            Button(
-                onClick = { viewModel.clearCompletedTodos() },
-                enabled = uiState.completedCount > 0,
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                Text("완료 항목 삭제")
+            if (uiState.completedCount > 0) {
+                TextButton(
+                    onClick = { viewModel.clearCompletedTodos() },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = "완료 항목 삭제 (${uiState.completedCount})",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             if (uiState.todos.isEmpty()) {
@@ -280,14 +285,7 @@ fun TodoScreen(viewModel: TodoViewModel) {
                         TodoRow(
                             todo = todo,
                             onToggle = { viewModel.toggleTodo(todo) },
-                            onViewDetail = { selectedDetailTodo = todo },
-                            onEdit = {
-                                editingTodoId = todo.id
-                                editingTodoTitle = todo.title
-                                editingTodoMemo = todo.memo ?: ""
-                                editingTodoScheduledDate = todo.scheduledDate
-                            },
-                            onDelete = { viewModel.deleteTodo(todo) }
+                            onViewDetail = { selectedDetailTodo = todo }
                         )
                     }
                 }
@@ -318,6 +316,10 @@ fun TodoScreen(viewModel: TodoViewModel) {
                 editingTodoTitle = todo.title
                 editingTodoMemo = todo.memo ?: ""
                 editingTodoScheduledDate = todo.scheduledDate
+            },
+            onDelete = {
+                viewModel.deleteTodo(todo)
+                selectedDetailTodo = null
             }
         )
     }
@@ -546,9 +548,7 @@ private fun TodoFilterButton(
 private fun TodoRow(
     todo: TodoEntity,
     onToggle: () -> Unit,
-    onViewDetail: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onViewDetail: () -> Unit
 ) {
     val contentAlpha = if (todo.isCompleted) 0.5f else 1f
     val isOverdue = !todo.isCompleted && todo.scheduledDate < todayStartOfDayMillis()
@@ -605,21 +605,7 @@ private fun TodoRow(
                     )
                 }
             }
-            TextButton(
-                onClick = onEdit,
-                modifier = Modifier.alpha(contentAlpha)
-            ) {
-                Text(
-                    text = "수정",
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-            TextButton(onClick = onDelete) {
-                Text(
-                    text = "삭제",
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
+
         }
     }
 }
@@ -755,7 +741,8 @@ private fun TodoUpdateDialog(
 private fun TodoDetailDialog(
     todo: TodoEntity,
     onDismiss: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -826,8 +813,19 @@ private fun TodoDetailDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("닫기")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("닫기")
+                }
+                TextButton(onClick = onDelete) {
+                    Text(
+                        text = "삭제",
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                    )
+                }
             }
         }
     )
