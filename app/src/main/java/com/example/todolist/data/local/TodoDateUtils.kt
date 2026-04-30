@@ -73,3 +73,36 @@ fun nextDayMillis(date: Long): Long {
     cal.add(Calendar.DAY_OF_MONTH, 1)
     return normalizeToStartOfDayMillis(cal.timeInMillis)
 }
+
+/**
+ * Returns the next scheduledDate based on repeatType.
+ * repeatType: 0=none, 1=daily, 2=weekly, 3=monthly
+ * Returns null if repeatType is 0 (no repeat).
+ * For monthly repeat, if the target month has fewer days, clamps to the last day of that month.
+ */
+fun nextRepeatDateMillis(currentDate: Long, repeatType: Int): Long? {
+    return when (repeatType) {
+        1 -> {
+            val cal = Calendar.getInstance()
+            cal.timeInMillis = currentDate
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+            normalizeToStartOfDayMillis(cal.timeInMillis)
+        }
+        2 -> {
+            val cal = Calendar.getInstance()
+            cal.timeInMillis = currentDate
+            cal.add(Calendar.DAY_OF_MONTH, 7)
+            normalizeToStartOfDayMillis(cal.timeInMillis)
+        }
+        3 -> {
+            val cal = Calendar.getInstance()
+            cal.timeInMillis = currentDate
+            val dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
+            cal.add(Calendar.MONTH, 1)
+            val maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+            cal.set(Calendar.DAY_OF_MONTH, minOf(dayOfMonth, maxDay))
+            normalizeToStartOfDayMillis(cal.timeInMillis)
+        }
+        else -> null
+    }
+}

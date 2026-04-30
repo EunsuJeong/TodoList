@@ -2,13 +2,14 @@ package com.example.todolist.data.repository
 
 import com.example.todolist.data.local.TodoDao
 import com.example.todolist.data.local.TodoEntity
+import com.example.todolist.data.local.nextRepeatDateMillis
 import com.example.todolist.data.local.todayStartOfDayMillis
 import kotlinx.coroutines.flow.Flow
 
 class TodoRepository(private val todoDao: TodoDao) {
     val todos: Flow<List<TodoEntity>> = todoDao.getAllTodos()
 
-    suspend fun addTodo(title: String, scheduledDate: Long = todayStartOfDayMillis(), memo: String? = null, priority: Int = 1) {
+    suspend fun addTodo(title: String, scheduledDate: Long = todayStartOfDayMillis(), memo: String? = null, priority: Int = 1, repeatType: Int = 0) {
         if (title.isBlank()) return
         val now = System.currentTimeMillis()
         todoDao.insertTodo(
@@ -18,7 +19,8 @@ class TodoRepository(private val todoDao: TodoDao) {
                 updatedAt = now,
                 scheduledDate = scheduledDate,
                 memo = memo?.trim()?.ifEmpty { null },
-                priority = priority
+                priority = priority,
+                repeatType = repeatType
             )
         )
     }
@@ -36,7 +38,7 @@ class TodoRepository(private val todoDao: TodoDao) {
         )
     }
 
-    suspend fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null, priority: Int = 1) {
+    suspend fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null, priority: Int = 1, repeatType: Int = 0) {
         if (newTitle.isBlank()) return
         todoDao.updateTodoDetails(
             todoId = todoId,
@@ -44,17 +46,38 @@ class TodoRepository(private val todoDao: TodoDao) {
             scheduledDate = scheduledDate,
             memo = memo?.trim()?.ifEmpty { null },
             priority = priority,
+            repeatType = repeatType,
             updatedAt = System.currentTimeMillis()
         )
     }
 
     suspend fun toggleTodo(todo: TodoEntity) {
+        val nowCompleting = !todo.isCompleted
         todoDao.updateTodo(
             todo.copy(
-                isCompleted = !todo.isCompleted,
+                isCompleted = nowCompleting,
                 updatedAt = System.currentTimeMillis()
             )
         )
+        // Only create next todo when transitioning from incomplete -> complete
+        if (nowCompleting && todo.repeatType != 0) {
+            val nextDate = nextRepeatDateMillis(todo.scheduledDate, todo.repeatType)
+            if (nextDate != null) {
+                val now = System.currentTimeMillis()
+                todoDao.insertTodo(
+                    TodoEntity(
+                        title = todo.title,
+                        memo = todo.memo,
+                        priority = todo.priority,
+                        repeatType = todo.repeatType,
+                        isCompleted = false,
+                        scheduledDate = nextDate,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+            }
+        }
     }
 
     suspend fun deleteTodo(todo: TodoEntity) {

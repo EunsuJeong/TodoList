@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -98,7 +99,9 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     var editingTodoMemo by remember { mutableStateOf("") }
     var editingTodoScheduledDate by remember { mutableStateOf(todayStartOfDayMillis()) }
     var editingTodoPriority by remember { mutableStateOf(1) }
+    var editingTodoRepeatType by remember { mutableStateOf(0) }
     var addingTodoPriority by remember { mutableStateOf(1) }
+    var addingTodoRepeatType by remember { mutableStateOf(0) }
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
     var selectedTab by rememberSaveable { mutableStateOf(preferences.getMainTab()) }
 
@@ -191,14 +194,17 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
             initialValue = "",
             initialMemo = "",
             initialPriority = addingTodoPriority,
+            initialRepeatType = addingTodoRepeatType,
             onDismiss = { 
                 showAddDialog = false
                 addingTodoPriority = 1
+                addingTodoRepeatType = 0
             },
-            onConfirm = { newTitle, newMemo, priority ->
-                viewModel.addTodo(newTitle, newMemo.trim().ifEmpty { null }, priority)
+            onConfirm = { newTitle, newMemo, priority, repeatType ->
+                viewModel.addTodo(newTitle, newMemo.trim().ifEmpty { null }, priority, repeatType)
                 showAddDialog = false
                 addingTodoPriority = 1
+                addingTodoRepeatType = 0
             }
         )
     }
@@ -214,6 +220,7 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                 editingTodoMemo = todo.memo ?: ""
                 editingTodoScheduledDate = todo.scheduledDate
                 editingTodoPriority = todo.priority
+                editingTodoRepeatType = todo.repeatType
             },
             onDelete = {
                 viewModel.deleteTodo(todo)
@@ -229,21 +236,24 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
             initialMemo = editingTodoMemo,
             initialScheduledDate = editingTodoScheduledDate,
             initialPriority = editingTodoPriority,
+            initialRepeatType = editingTodoRepeatType,
             onDismiss = {
                 editingTodoId = null
                 editingTodoTitle = ""
                 editingTodoMemo = ""
                 editingTodoScheduledDate = todayStartOfDayMillis()
                 editingTodoPriority = 1
+                editingTodoRepeatType = 0
             },
-            onConfirm = { newTitle, newScheduledDate, newMemo, priority ->
+            onConfirm = { newTitle, newScheduledDate, newMemo, priority, repeatType ->
                 if (newTitle.isNotBlank()) {
                     viewModel.updateTodoDetails(
                         todoId = todoId,
                         newTitle = newTitle,
                         scheduledDate = newScheduledDate,
                         memo = newMemo.trim().ifEmpty { null },
-                        priority = priority
+                        priority = priority,
+                        repeatType = repeatType
                     )
                 }
                 editingTodoId = null
@@ -251,6 +261,7 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                 editingTodoMemo = ""
                 editingTodoScheduledDate = todayStartOfDayMillis()
                 editingTodoPriority = 1
+                editingTodoRepeatType = 0
             }
         )
     }
@@ -758,6 +769,13 @@ private fun priorityLabel(priority: Int): String = when (priority) {
     else -> "높음"
 }
 
+private fun repeatTypeLabel(repeatType: Int): String = when (repeatType) {
+    1 -> "매일"
+    2 -> "매주"
+    3 -> "매월"
+    else -> "반복 없음"
+}
+
 private fun priorityColor(priority: Int, colorScheme: androidx.compose.material3.ColorScheme): androidx.compose.ui.graphics.Color = when (priority) {
     0 -> colorScheme.secondaryContainer
     1 -> colorScheme.surfaceVariant
@@ -865,6 +883,13 @@ private fun TodoRow(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+                if (todo.repeatType != 0) {
+                    Text(
+                        text = repeatTypeLabel(todo.repeatType),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha)
+                    )
+                }
             }
             PriorityLabel(priority = todo.priority)
         }
@@ -877,12 +902,14 @@ private fun TodoEditDialog(
     initialValue: String,
     initialMemo: String,
     initialPriority: Int,
+    initialRepeatType: Int = 0,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Int) -> Unit
+    onConfirm: (String, String, Int, Int) -> Unit
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
     var memo by remember(initialMemo) { mutableStateOf(initialMemo) }
     var priority by remember(initialPriority) { mutableStateOf(initialPriority) }
+    var repeatType by remember(initialRepeatType) { mutableStateOf(initialRepeatType) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -923,11 +950,34 @@ private fun TodoEditDialog(
                         }
                     }
                 }
+                Text(
+                    text = "반복",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(0 to "없음", 1 to "매일", 2 to "매주", 3 to "매월").forEach { (value, label) ->
+                        OutlinedButton(
+                            onClick = { repeatType = value },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = if (repeatType == value)
+                                ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            else
+                                ButtonDefaults.outlinedButtonColors()
+                        ) {
+                            Text(label, fontSize = 11.sp)
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text, memo, priority) },
+                onClick = { onConfirm(text, memo, priority, repeatType) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")
@@ -948,13 +998,15 @@ private fun TodoUpdateDialog(
     initialMemo: String,
     initialScheduledDate: Long,
     initialPriority: Int,
+    initialRepeatType: Int = 0,
     onDismiss: () -> Unit,
-    onConfirm: (String, Long, String, Int) -> Unit
+    onConfirm: (String, Long, String, Int, Int) -> Unit
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
     var memo by remember(initialMemo) { mutableStateOf(initialMemo) }
     var scheduledDate by remember(initialScheduledDate) { mutableStateOf(initialScheduledDate) }
     var priority by remember(initialPriority) { mutableStateOf(initialPriority) }
+    var repeatType by remember(initialRepeatType) { mutableStateOf(initialRepeatType) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -996,6 +1048,29 @@ private fun TodoUpdateDialog(
                     }
                 }
                 Text(
+                    text = "반복",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(0 to "없음", 1 to "매일", 2 to "매주", 3 to "매월").forEach { (value, label) ->
+                        OutlinedButton(
+                            onClick = { repeatType = value },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = if (repeatType == value)
+                                ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            else
+                                ButtonDefaults.outlinedButtonColors()
+                        ) {
+                            Text(label, fontSize = 11.sp)
+                        }
+                    }
+                }
+                Text(
                     text = "예정일 ${formatDate(scheduledDate)}",
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -1026,7 +1101,7 @@ private fun TodoUpdateDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text, scheduledDate, memo, priority) },
+                onClick = { onConfirm(text, scheduledDate, memo, priority, repeatType) },
                 enabled = text.isNotBlank()
             ) {
                 Text("저장")
@@ -1079,6 +1154,10 @@ private fun TodoDetailDialog(
                 DetailInfoRow(
                     label = "중요도",
                     value = priorityLabel(todo.priority)
+                )
+                DetailInfoRow(
+                    label = "반복",
+                    value = repeatTypeLabel(todo.repeatType)
                 )
                 DetailInfoRow(
                     label = "상태",

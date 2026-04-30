@@ -209,9 +209,9 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         updateSelectedDate(todayStartOfDayMillis())
     }
 
-    fun addTodo(title: String, memo: String? = null, priority: Int = 1) {
+    fun addTodo(title: String, memo: String? = null, priority: Int = 1, repeatType: Int = 0) {
         viewModelScope.launch {
-            repository.addTodo(title, _selectedDate.value, memo, priority)
+            repository.addTodo(title, _selectedDate.value, memo, priority, repeatType)
         }
     }
 
@@ -233,14 +233,15 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         }
     }
 
-    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null, priority: Int = 1) {
+    fun updateTodoDetails(todoId: Long, newTitle: String, scheduledDate: Long, memo: String? = null, priority: Int = 1, repeatType: Int = 0) {
         viewModelScope.launch {
             repository.updateTodoDetails(
                 todoId = todoId,
                 newTitle = newTitle,
                 scheduledDate = scheduledDate,
                 memo = memo,
-                priority = priority
+                priority = priority,
+                repeatType = repeatType
             )
         }
     }

@@ -14,5 +14,6 @@ data class TodoEntity(
     val updatedAt: Long = System.currentTimeMillis(),
     val scheduledDate: Long = todayStartOfDayMillis(),
     val memo: String? = null,
-    val priority: Int = 1
+    val priority: Int = 1,
+    val repeatType: Int = 0
 )
