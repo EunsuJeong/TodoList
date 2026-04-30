@@ -89,6 +89,13 @@ private fun formatKoreanDateWithDay(millis: Long): String =
 private fun formatOverdueBadgeCount(count: Int): String =
     if (count > 9) "9+" else count.toString()
 
+private fun formatTodoTabA11yDescription(overdueCount: Int): String = when {
+    overdueCount <= 0 -> "할 일"
+    overdueCount == 1 -> "할 일, 지난 일정 1개 있음"
+    overdueCount >= 10 -> "할 일, 지난 일정 10개 이상 있음"
+    else -> "할 일, 지난 일정 ${overdueCount}개 있음"
+}
+
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
 enum class TodoMainTab { TODO, CALENDAR, SEARCH }
@@ -132,6 +139,9 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                     icon = {},
                     label = {
                         BadgedBox(
+                            modifier = Modifier.clearAndSetSemantics {
+                                contentDescription = formatTodoTabA11yDescription(uiState.overdueActiveCount)
+                            },
                             badge = {
                                 if (uiState.overdueActiveCount > 0) {
                                     Badge {
