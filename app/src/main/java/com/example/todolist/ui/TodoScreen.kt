@@ -51,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -89,11 +90,11 @@ private fun formatKoreanDateWithDay(millis: Long): String =
 private fun formatOverdueBadgeCount(count: Int): String =
     if (count > 9) "9+" else count.toString()
 
-private fun formatTodoTabA11yDescription(overdueCount: Int): String = when {
-    overdueCount <= 0 -> "할 일"
-    overdueCount == 1 -> "할 일, 지난 일정 1개 있음"
-    overdueCount >= 10 -> "할 일, 지난 일정 10개 이상 있음"
-    else -> "할 일, 지난 일정 ${overdueCount}개 있음"
+private fun formatBottomTabA11yLabel(tabName: String, overdueCount: Int? = null): String = when {
+    overdueCount == null || overdueCount <= 0 -> tabName
+    overdueCount == 1 -> "$tabName, 지난 일정 1개 있음"
+    overdueCount >= 10 -> "$tabName, 지난 일정 10개 이상 있음"
+    else -> "$tabName, 지난 일정 ${overdueCount}개 있음"
 }
 
 private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
@@ -132,6 +133,11 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
             NavigationBar {
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.TODO,
+                    modifier = Modifier.semantics {
+                        if (selectedTab == TodoMainTab.TODO) {
+                            stateDescription = "선택됨"
+                        }
+                    },
                     onClick = { 
                         selectedTab = TodoMainTab.TODO
                         preferences.saveMainTab(TodoMainTab.TODO)
@@ -140,7 +146,10 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                     label = {
                         BadgedBox(
                             modifier = Modifier.clearAndSetSemantics {
-                                contentDescription = formatTodoTabA11yDescription(uiState.overdueActiveCount)
+                                contentDescription = formatBottomTabA11yLabel(
+                                    tabName = "할 일",
+                                    overdueCount = uiState.overdueActiveCount
+                                )
                             },
                             badge = {
                                 if (uiState.overdueActiveCount > 0) {
@@ -156,21 +165,45 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.CALENDAR,
+                    modifier = Modifier.semantics {
+                        if (selectedTab == TodoMainTab.CALENDAR) {
+                            stateDescription = "선택됨"
+                        }
+                    },
                     onClick = { 
                         selectedTab = TodoMainTab.CALENDAR
                         preferences.saveMainTab(TodoMainTab.CALENDAR)
                     },
                     icon = {},
-                    label = { Text("달력") }
+                    label = {
+                        Text(
+                            text = "달력",
+                            modifier = Modifier.clearAndSetSemantics {
+                                contentDescription = formatBottomTabA11yLabel(tabName = "달력")
+                            }
+                        )
+                    }
                 )
                 NavigationBarItem(
                     selected = selectedTab == TodoMainTab.SEARCH,
+                    modifier = Modifier.semantics {
+                        if (selectedTab == TodoMainTab.SEARCH) {
+                            stateDescription = "선택됨"
+                        }
+                    },
                     onClick = { 
                         selectedTab = TodoMainTab.SEARCH
                         preferences.saveMainTab(TodoMainTab.SEARCH)
                     },
                     icon = {},
-                    label = { Text("검색") }
+                    label = {
+                        Text(
+                            text = "검색",
+                            modifier = Modifier.clearAndSetSemantics {
+                                contentDescription = formatBottomTabA11yLabel(tabName = "검색")
+                            }
+                        )
+                    }
                 )
             }
         }
