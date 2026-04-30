@@ -513,7 +513,28 @@ private fun SearchTabContent(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-        if (uiState.todos.isEmpty()) {
+        if (uiState.searchQuery.trim().isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "검색어를 입력해보세요.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "전체 할 일에서 제목과 메모를 검색합니다.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else if (uiState.searchTodos.isEmpty()) {
             TodoEmptyState(
                 searchQuery = uiState.searchQuery,
                 selectedFilter = uiState.selectedFilter,
@@ -524,11 +545,12 @@ private fun SearchTabContent(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(items = uiState.todos, key = { it.id }) { todo ->
+                items(items = uiState.searchTodos, key = { it.id }) { todo ->
                     TodoRow(
                         todo = todo,
                         onToggle = { viewModel.toggleTodo(todo) },
-                        onViewDetail = { onViewDetail(todo) }
+                        onViewDetail = { onViewDetail(todo) },
+                        showScheduledDate = true
                     )
                 }
             }
@@ -827,7 +849,8 @@ private fun TodoFilterButton(
 private fun TodoRow(
     todo: TodoEntity,
     onToggle: () -> Unit,
-    onViewDetail: () -> Unit
+    onViewDetail: () -> Unit,
+    showScheduledDate: Boolean = false
 ) {
     val contentAlpha = if (todo.isCompleted) 0.5f else 1f
     val isOverdue = !todo.isCompleted && todo.scheduledDate < todayStartOfDayMillis()
@@ -881,6 +904,13 @@ private fun TodoRow(
                         textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (showScheduledDate) {
+                    Text(
+                        text = "예정일 ${formatDate(todo.scheduledDate)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
                     )
                 }
                 if (todo.repeatType != 0) {
