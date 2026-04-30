@@ -225,6 +225,12 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         preferences.saveSort(sort)
     }
 
+    fun resetSearchFilters() {
+        setFilter(TodoFilter.ALL)
+        setPriorityFilter(TodoPriorityFilter.ALL)
+        setSort(TodoSort.CREATED_DESC)
+    }
+
     fun setSearchQuery(query: String) {
         _searchInput.value = query
     }

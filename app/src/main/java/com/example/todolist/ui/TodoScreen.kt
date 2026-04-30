@@ -545,7 +545,8 @@ private fun SearchTabContent(
                 searchQuery = uiState.searchQuery,
                 selectedFilter = uiState.selectedFilter,
                 modifier = Modifier.fillMaxSize(),
-                conditionSummary = conditionSummary
+                conditionSummary = conditionSummary,
+                onResetFilters = { viewModel.resetSearchFilters() }
             )
         } else {
             LazyColumn(
@@ -743,7 +744,8 @@ private fun TodoEmptyState(
     searchQuery: String,
     selectedFilter: TodoFilter,
     modifier: Modifier = Modifier,
-    conditionSummary: String? = null
+    conditionSummary: String? = null,
+    onResetFilters: (() -> Unit)? = null
 ) {
     val (icon, title, subtitle) = when {
         searchQuery.trim().isNotEmpty() -> Triple(
@@ -795,6 +797,17 @@ private fun TodoEmptyState(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            if (onResetFilters != null) {
+                OutlinedButton(
+                    onClick = onResetFilters,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Text(
+                        text = "필터 초기화",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
             }
         }
     }
