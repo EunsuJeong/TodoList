@@ -12,10 +12,12 @@ import com.example.todolist.data.local.previousMonthMillis
 import com.example.todolist.data.local.todayStartOfDayMillis
 import com.example.todolist.data.preferences.TodoViewPreferences
 import com.example.todolist.data.repository.TodoRepository
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -79,7 +81,15 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
     private val _selectedPriorityFilter = MutableStateFlow(preferences.getPriorityFilter())
     private val _selectedDate = MutableStateFlow(todayStartOfDayMillis())
     private val visibleMonth = MutableStateFlow(monthStartMillis(todayStartOfDayMillis()))
-    private val _searchQuery = MutableStateFlow("")
+    private val _searchInput = MutableStateFlow("")
+
+    @OptIn(FlowPreview::class)
+    private val debouncedSearchQuery = _searchInput.debounce(300)
+
+    private val effectiveSearchQuery = combine(_searchInput, debouncedSearchQuery) { input, debounced ->
+        // Clear should reset filtering immediately without waiting for debounce.
+        if (input.trim().isEmpty()) "" else debounced
+    }
 
     val uiState: StateFlow<TodoUiState> = combine(
         repository.todos, selectedFilter, selectedSort, _selectedDate, visibleMonth
@@ -135,8 +145,10 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             priorityFilteredAllTodos = priorityFilteredAll,
             selectedPriorityFilter = priorityFilter
         )
-    }.combine(_searchQuery) { base, query ->
-        val trimmed = query.trim()
+    }.combine(combine(_searchInput, effectiveSearchQuery) { input, effective -> input to effective }) { base, queries ->
+        val inputQuery = queries.first
+        val effectiveQuery = queries.second
+        val trimmed = effectiveQuery.trim()
         val todoTabSearchFiltered = if (trimmed.isEmpty()) {
             base.priorityFilteredDateTodos
         } else {
@@ -180,7 +192,7 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             visibleMonth = base.visibleMonth,
             datesWithTodos = base.datesWithTodos,
             overdueDates = base.overdueDates,
-            searchQuery = query,
+            searchQuery = inputQuery,
             searchResultCount = sortedSearchTodos.size
         )
     }
@@ -214,11 +226,11 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
     }
 
     fun setSearchQuery(query: String) {
-        _searchQuery.value = query
+        _searchInput.value = query
     }
 
     fun clearSearchQuery() {
-        _searchQuery.value = ""
+        _searchInput.value = ""
     }
 
     fun setSelectedDate(date: Long) {
