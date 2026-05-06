@@ -132,7 +132,7 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Todo List") })
+            TopAppBar(title = { Text(stringResource(R.string.app_name)) })
         },
         floatingActionButton = {
             if (selectedTab == TodoMainTab.TODO) {
