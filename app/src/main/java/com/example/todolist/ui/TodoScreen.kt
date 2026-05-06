@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -148,19 +150,12 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                             stateDescription = "선택됨"
                         }
                     },
-                    onClick = { 
+                    onClick = {
                         selectedTab = TodoMainTab.TODO
                         preferences.saveMainTab(TodoMainTab.TODO)
                     },
-                    icon = {},
-                    label = {
+                    icon = {
                         BadgedBox(
-                            modifier = Modifier.clearAndSetSemantics {
-                                contentDescription = formatBottomTabA11yLabel(
-                                    tabName = "할 일",
-                                    overdueCount = uiState.overdueActiveCount
-                                )
-                            },
                             badge = {
                                 if (uiState.overdueActiveCount > 0) {
                                     Badge {
@@ -169,8 +164,19 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                                 }
                             }
                         ) {
-                            Text("할 일")
+                            Box(modifier = Modifier.size(10.dp).alpha(0f))
                         }
+                    },
+                    label = {
+                        Text(
+                            text = "할 일",
+                            modifier = Modifier.clearAndSetSemantics {
+                                contentDescription = formatBottomTabA11yLabel(
+                                    tabName = "할 일",
+                                    overdueCount = uiState.overdueActiveCount
+                                )
+                            }
+                        )
                     }
                 )
                 NavigationBarItem(
@@ -371,6 +377,17 @@ private fun TodoListTabContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(bottom = 4.dp)
+        ) {
+            Text(
+                text = "진행 상태",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -489,6 +506,9 @@ private fun FilterSortBottomSheet(
     onDone: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var showPriorityDialog by remember { mutableStateOf(false) }
+    var showSortDialog by remember { mutableStateOf(false) }
+
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -506,66 +526,24 @@ private fun FilterSortBottomSheet(
             Text(
                 text = formatFilterSortSummary(selectedPriorityFilter, selectedSort),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             HorizontalDivider()
 
-            Text(
-                text = "중요도",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            FilterSortSelectorField(
+                title = "중요도",
+                value = priorityFilterLabel(selectedPriorityFilter),
+                onClick = { showPriorityDialog = true }
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterSortSelectionRow(
-                    text = "전체",
-                    selected = selectedPriorityFilter == TodoPriorityFilter.ALL,
-                    onClick = { onPrioritySelected(TodoPriorityFilter.ALL) }
-                )
-                FilterSortSelectionRow(
-                    text = "높음",
-                    selected = selectedPriorityFilter == TodoPriorityFilter.HIGH,
-                    onClick = { onPrioritySelected(TodoPriorityFilter.HIGH) }
-                )
-                FilterSortSelectionRow(
-                    text = "보통",
-                    selected = selectedPriorityFilter == TodoPriorityFilter.NORMAL,
-                    onClick = { onPrioritySelected(TodoPriorityFilter.NORMAL) }
-                )
-                FilterSortSelectionRow(
-                    text = "낮음",
-                    selected = selectedPriorityFilter == TodoPriorityFilter.LOW,
-                    onClick = { onPrioritySelected(TodoPriorityFilter.LOW) }
-                )
-            }
 
-            Text(
-                text = "정렬",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            FilterSortSelectorField(
+                title = "정렬",
+                value = sortLabel(selectedSort),
+                onClick = { showSortDialog = true }
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterSortSelectionRow(
-                    text = "최신순",
-                    selected = selectedSort == TodoSort.CREATED_DESC,
-                    onClick = { onSortSelected(TodoSort.CREATED_DESC) }
-                )
-                FilterSortSelectionRow(
-                    text = "오래된순",
-                    selected = selectedSort == TodoSort.CREATED_ASC,
-                    onClick = { onSortSelected(TodoSort.CREATED_ASC) }
-                )
-                FilterSortSelectionRow(
-                    text = "수정순",
-                    selected = selectedSort == TodoSort.UPDATED_DESC,
-                    onClick = { onSortSelected(TodoSort.UPDATED_DESC) }
-                )
-                FilterSortSelectionRow(
-                    text = "중요순",
-                    selected = selectedSort == TodoSort.PRIORITY_DESC,
-                    onClick = { onSortSelected(TodoSort.PRIORITY_DESC) }
-                )
-            }
 
             Row(
                 modifier = Modifier
@@ -577,50 +555,162 @@ private fun FilterSortBottomSheet(
                 TextButton(onClick = onDone) { Text("완료") }
             }
         }
+
+        if (showPriorityDialog) {
+            SelectionDialog(
+                title = "중요도 선택",
+                options = listOf(
+                    "전체" to (selectedPriorityFilter == TodoPriorityFilter.ALL),
+                    "높음" to (selectedPriorityFilter == TodoPriorityFilter.HIGH),
+                    "보통" to (selectedPriorityFilter == TodoPriorityFilter.NORMAL),
+                    "낮음" to (selectedPriorityFilter == TodoPriorityFilter.LOW)
+                ),
+                onSelect = { selected ->
+                    when (selected) {
+                        "전체" -> onPrioritySelected(TodoPriorityFilter.ALL)
+                        "높음" -> onPrioritySelected(TodoPriorityFilter.HIGH)
+                        "보통" -> onPrioritySelected(TodoPriorityFilter.NORMAL)
+                        "낮음" -> onPrioritySelected(TodoPriorityFilter.LOW)
+                    }
+                    showPriorityDialog = false
+                },
+                onDismiss = { showPriorityDialog = false }
+            )
+        }
+
+        if (showSortDialog) {
+            SelectionDialog(
+                title = "정렬 선택",
+                options = listOf(
+                    "최신순" to (selectedSort == TodoSort.CREATED_DESC),
+                    "오래된순" to (selectedSort == TodoSort.CREATED_ASC),
+                    "수정순" to (selectedSort == TodoSort.UPDATED_DESC),
+                    "중요순" to (selectedSort == TodoSort.PRIORITY_DESC)
+                ),
+                onSelect = { selected ->
+                    when (selected) {
+                        "최신순" -> onSortSelected(TodoSort.CREATED_DESC)
+                        "오래된순" -> onSortSelected(TodoSort.CREATED_ASC)
+                        "수정순" -> onSortSelected(TodoSort.UPDATED_DESC)
+                        "중요순" -> onSortSelected(TodoSort.PRIORITY_DESC)
+                    }
+                    showSortDialog = false
+                },
+                onDismiss = { showSortDialog = false }
+            )
+        }
     }
 }
 
 @Composable
-private fun FilterSortSelectionRow(
-    text: String,
-    selected: Boolean,
+private fun FilterSortSelectorField(
+    title: String,
+    value: String,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (selected) {
-        MaterialTheme.colorScheme.secondaryContainer
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-    val textColor = if (selected) {
-        MaterialTheme.colorScheme.onSecondaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
-            .border(
-                width = 1.dp,
-                color = if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = textColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        RadioButton(selected = selected, onClick = null)
+        Card(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "▼",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectionDialog(
+    title: String,
+    options: List<Pair<String, Boolean>>,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                options.forEach { (text, selected) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onSelect(text) }
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        RadioButton(selected = selected, onClick = { onSelect(text) })
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("닫기") }
+        }
+    )
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun RepeatOptionRow(
+    repeatType: Int,
+    onRepeatTypeChange: (Int) -> Unit
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        listOf(0 to "없음", 1 to "매일", 2 to "매주", 3 to "매월").forEach { (value, label) ->
+            OutlinedButton(
+                onClick = { onRepeatTypeChange(value) },
+                shape = RoundedCornerShape(6.dp),
+                colors = if (repeatType == value)
+                    ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                else
+                    ButtonDefaults.outlinedButtonColors()
+            ) {
+                Text(label, fontSize = 11.sp)
+            }
+        }
     }
 }
 
@@ -1362,24 +1452,10 @@ private fun TodoEditDialog(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(0 to "없음", 1 to "매일", 2 to "매주", 3 to "매월").forEach { (value, label) ->
-                        OutlinedButton(
-                            onClick = { repeatType = value },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = if (repeatType == value)
-                                ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                            else
-                                ButtonDefaults.outlinedButtonColors()
-                        ) {
-                            Text(label, fontSize = 11.sp)
-                        }
-                    }
-                }
+                RepeatOptionRow(
+                    repeatType = repeatType,
+                    onRepeatTypeChange = { repeatType = it }
+                )
             }
         },
         confirmButton = {
@@ -1459,24 +1535,10 @@ private fun TodoUpdateDialog(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(0 to "없음", 1 to "매일", 2 to "매주", 3 to "매월").forEach { (value, label) ->
-                        OutlinedButton(
-                            onClick = { repeatType = value },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = if (repeatType == value)
-                                ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                            else
-                                ButtonDefaults.outlinedButtonColors()
-                        ) {
-                            Text(label, fontSize = 11.sp)
-                        }
-                    }
-                }
+                RepeatOptionRow(
+                    repeatType = repeatType,
+                    onRepeatTypeChange = { repeatType = it }
+                )
                 Text(
                     text = "예정일 ${formatDate(scheduledDate)}",
                     style = MaterialTheme.typography.bodyMedium
