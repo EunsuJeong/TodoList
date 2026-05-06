@@ -582,17 +582,17 @@ private fun FilterSortBottomSheet(
             SelectionDialog(
                 title = "정렬 선택",
                 options = listOf(
+                    "중요순" to (selectedSort == TodoSort.PRIORITY_DESC),
                     "최신순" to (selectedSort == TodoSort.CREATED_DESC),
                     "오래된순" to (selectedSort == TodoSort.CREATED_ASC),
-                    "수정순" to (selectedSort == TodoSort.UPDATED_DESC),
-                    "중요순" to (selectedSort == TodoSort.PRIORITY_DESC)
+                    "수정순" to (selectedSort == TodoSort.UPDATED_DESC)
                 ),
                 onSelect = { selected ->
                     when (selected) {
+                        "중요순" -> onSortSelected(TodoSort.PRIORITY_DESC)
                         "최신순" -> onSortSelected(TodoSort.CREATED_DESC)
                         "오래된순" -> onSortSelected(TodoSort.CREATED_ASC)
                         "수정순" -> onSortSelected(TodoSort.UPDATED_DESC)
-                        "중요순" -> onSortSelected(TodoSort.PRIORITY_DESC)
                     }
                     showSortDialog = false
                 },
@@ -1251,7 +1251,7 @@ private fun filterLabel(filter: TodoFilter): String = when (filter) {
 }
 
 private fun priorityFilterLabel(filter: TodoPriorityFilter): String = when (filter) {
-    TodoPriorityFilter.ALL -> "중요도 전체"
+    TodoPriorityFilter.ALL -> "전체"
     TodoPriorityFilter.HIGH -> "높음"
     TodoPriorityFilter.NORMAL -> "보통"
     TodoPriorityFilter.LOW -> "낮음"
