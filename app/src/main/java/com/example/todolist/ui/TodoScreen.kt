@@ -41,6 +41,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -272,6 +273,7 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                         snackbarHostState.showSnackbar(quickAddSuccessMessage)
                     }
                 },
+                snackbarHostState = snackbarHostState,
                 onViewDetail = { selectedDetailTodo = it },
                 modifier = Modifier
                     .fillMaxSize()
@@ -462,12 +464,16 @@ private fun TodoListTabContent(
     onToggleTodayFocus: () -> Unit,
     onMoveOverdueComplete: (Int) -> Unit,
     onQuickAddSuccess: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     onViewDetail: (TodoEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showFilterSortSheet by remember { mutableStateOf(false) }
     var showMoveOverdueDialog by remember { mutableStateOf(false) }
     var quickAddInput by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val completedSnackbarMessage = stringResource(R.string.todo_completed_snackbar)
+    val undoActionLabel = stringResource(R.string.todo_completed_undo_action)
 
     fun submitQuickAdd() {
         val title = quickAddInput.trim()
@@ -650,7 +656,21 @@ private fun TodoListTabContent(
                 items(items = uiState.todos, key = { it.id }) { todo ->
                     TodoRow(
                         todo = todo,
-                        onToggle = { viewModel.toggleTodo(todo) },
+                        onToggle = {
+                            val wasActive = !todo.isCompleted
+                            viewModel.toggleTodo(todo)
+                            if (wasActive) {
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = completedSnackbarMessage,
+                                        actionLabel = undoActionLabel
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        viewModel.undoCompleteTodo(todo)
+                                    }
+                                }
+                            }
+                        },
                         onViewDetail = { onViewDetail(todo) }
                     )
                 }
