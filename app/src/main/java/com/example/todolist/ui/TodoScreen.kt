@@ -38,6 +38,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -45,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -62,11 +65,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todolist.R
 import com.example.todolist.data.local.TodoEntity
@@ -80,6 +86,7 @@ import com.example.todolist.data.local.todayStartOfDayMillis
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 private fun formatDate(millis: Long): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
@@ -132,6 +139,9 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
     var selectedTab by rememberSaveable { mutableStateOf(preferences.getMainTab()) }
     var showAppInfoDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val quickAddSuccessMessage = stringResource(R.string.quick_add_today_success)
     val settingsContentDescription = stringResource(R.string.app_info_menu)
 
     Scaffold(
@@ -149,6 +159,9 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                     }
                 }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         floatingActionButton = {
             if (selectedTab == TodoMainTab.TODO) {
@@ -244,6 +257,11 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
             TodoMainTab.TODO -> TodoListTabContent(
                 uiState = uiState,
                 viewModel = viewModel,
+                onQuickAddSuccess = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(quickAddSuccessMessage)
+                    }
+                },
                 onViewDetail = { selectedDetailTodo = it },
                 modifier = Modifier
                     .fillMaxSize()
@@ -431,10 +449,21 @@ private fun AppInfoRow(label: String, value: String) {
 private fun TodoListTabContent(
     uiState: TodoUiState,
     viewModel: TodoViewModel,
+    onQuickAddSuccess: () -> Unit,
     onViewDetail: (TodoEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showFilterSortSheet by remember { mutableStateOf(false) }
+    var quickAddInput by remember { mutableStateOf("") }
+
+    fun submitQuickAdd() {
+        val title = quickAddInput.trim()
+        if (title.isBlank()) return
+
+        viewModel.addQuickTodayTodo(title)
+        quickAddInput = ""
+        onQuickAddSuccess()
+    }
 
     Column(modifier = modifier) {
         TodaySummaryCard(
@@ -449,6 +478,38 @@ private fun TodoListTabContent(
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
         )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = quickAddInput,
+                    onValueChange = { quickAddInput = it },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    placeholder = { Text(stringResource(R.string.quick_add_today_placeholder)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submitQuickAdd() })
+                )
+                Button(
+                    onClick = { submitQuickAdd() },
+                    enabled = quickAddInput.trim().isNotEmpty()
+                ) {
+                    Text("+")
+                }
+            }
+        }
         SelectedDateHeader(
             selectedDate = uiState.selectedDate,
             totalCount = uiState.totalCount,
