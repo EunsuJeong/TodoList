@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -377,6 +378,27 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
     fun clearCompletedTodos() {
         viewModelScope.launch {
             repository.clearCompletedTodosForDate(_selectedDate.value)
+        }
+    }
+
+    fun moveOverdueTodosToToday(onComplete: (Int) -> Unit = {}) {
+        viewModelScope.launch {
+            val today = todayStartOfDayMillis()
+            val overdueTodos = repository.todos
+                .first()
+                .filter { it.scheduledDate < today && !it.isCompleted }
+
+            if (overdueTodos.isEmpty()) {
+                onComplete(0)
+                return@launch
+            }
+
+            overdueTodos.forEach { todo ->
+                repository.updateTodo(todo.copy(scheduledDate = today))
+            }
+
+            goToToday()
+            onComplete(overdueTodos.size)
         }
     }
 }

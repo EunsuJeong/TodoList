@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -127,6 +128,7 @@ enum class TodoMainTab { TODO, CALENDAR, SEARCH }
 @OptIn(ExperimentalMaterial3Api::class)
 fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTodoId by remember { mutableStateOf<Long?>(null) }
     var editingTodoTitle by remember { mutableStateOf("") }
@@ -258,6 +260,13 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                 uiState = uiState,
                 viewModel = viewModel,
                 onToggleTodayFocus = { viewModel.toggleTodayFocusMode() },
+                onMoveOverdueComplete = { movedCount ->
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.move_overdue_snackbar, movedCount)
+                        )
+                    }
+                },
                 onQuickAddSuccess = {
                     scope.launch {
                         snackbarHostState.showSnackbar(quickAddSuccessMessage)
@@ -451,11 +460,13 @@ private fun TodoListTabContent(
     uiState: TodoUiState,
     viewModel: TodoViewModel,
     onToggleTodayFocus: () -> Unit,
+    onMoveOverdueComplete: (Int) -> Unit,
     onQuickAddSuccess: () -> Unit,
     onViewDetail: (TodoEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showFilterSortSheet by remember { mutableStateOf(false) }
+    var showMoveOverdueDialog by remember { mutableStateOf(false) }
     var quickAddInput by remember { mutableStateOf("") }
 
     fun submitQuickAdd() {
@@ -475,6 +486,11 @@ private fun TodoListTabContent(
             onClick = { viewModel.goToToday() },
             onOverdueClick = uiState.oldestOverdueDate?.let { date ->
                 { viewModel.goToOldestOverdueDate(date) }
+            },
+            onMoveOverdueClick = if (uiState.overdueActiveCount > 0) {
+                { showMoveOverdueDialog = true }
+            } else {
+                null
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -654,6 +670,35 @@ private fun TodoListTabContent(
             },
             onDone = { showFilterSortSheet = false },
             onDismiss = { showFilterSortSheet = false }
+        )
+    }
+
+    if (showMoveOverdueDialog) {
+        AlertDialog(
+            onDismissRequest = { showMoveOverdueDialog = false },
+            title = { Text(stringResource(R.string.move_overdue_dialog_title)) },
+            text = {
+                Text(stringResource(R.string.move_overdue_dialog_message, uiState.overdueActiveCount))
+            },
+            dismissButton = {
+                TextButton(onClick = { showMoveOverdueDialog = false }) {
+                    Text(stringResource(R.string.move_overdue_cancel))
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showMoveOverdueDialog = false
+                        viewModel.moveOverdueTodosToToday { movedCount ->
+                            if (movedCount > 0) {
+                                onMoveOverdueComplete(movedCount)
+                            }
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.move_overdue_confirm))
+                }
+            }
         )
     }
 }
@@ -941,6 +986,7 @@ private fun TodaySummaryCard(
     overdueActiveCount: Int,
     onClick: () -> Unit,
     onOverdueClick: (() -> Unit)? = null,
+    onMoveOverdueClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -961,6 +1007,11 @@ private fun TodaySummaryCard(
             )
             if (overdueActiveCount > 0) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -970,12 +1021,26 @@ private fun TodaySummaryCard(
                             else Modifier
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "⚠️ 지난 일정 ${overdueActiveCount}개",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    ) {
+                        Text(
+                            text = "⚠️ 지난 일정 ${overdueActiveCount}개",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    if (onMoveOverdueClick != null) {
+                        OutlinedButton(
+                            onClick = onMoveOverdueClick,
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.move_overdue_action),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
                 }
             }
         }
