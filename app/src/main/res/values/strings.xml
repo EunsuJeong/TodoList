@@ -14,6 +14,8 @@
     <string name="app_info_dev_build">개발 빌드</string>
     <string name="quick_add_today_placeholder">오늘 할 일을 입력하세요</string>
     <string name="quick_add_today_success">오늘 할 일을 추가했습니다.</string>
+    <string name="today_focus_on">오늘 집중 ON</string>
+    <string name="today_focus_off">오늘 집중 OFF</string>
     <string name="calendar_accessibility_today">오늘</string>
     <string name="calendar_accessibility_selected">선택됨</string>
     <string name="calendar_accessibility_has_todo">할 일 있음</string>

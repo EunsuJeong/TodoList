@@ -57,6 +57,7 @@ data class TodoUiState(
     val completedOnlyDates: Set<Long> = emptySet(),
     val searchQuery: String = "",
     val searchResultCount: Int = 0,
+    val todayFocusMode: Boolean = false,
     val todayActiveCount: Int = 0,
     val todayCompletedCount: Int = 0,
     val overdueActiveCount: Int = 0,
@@ -75,6 +76,7 @@ private data class BaseTodosState(
     val selectedSort: TodoSort,
     val selectedPriorityFilter: TodoPriorityFilter,
     val selectedDate: Long,
+    val todayFocusMode: Boolean,
     val visibleMonth: Long,
     val datesWithTodos: Set<Long>,
     val overdueDates: Set<Long>,
@@ -85,6 +87,7 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
     private val selectedFilter = MutableStateFlow(preferences.getFilter())
     private val selectedSort = MutableStateFlow(preferences.getSort())
     private val _selectedPriorityFilter = MutableStateFlow(preferences.getPriorityFilter())
+    private val _todayFocusMode = MutableStateFlow(false)
     private val _selectedDate = MutableStateFlow(todayStartOfDayMillis())
     private val visibleMonth = MutableStateFlow(monthStartMillis(todayStartOfDayMillis()))
     private val _searchInput = MutableStateFlow("")
@@ -101,8 +104,8 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         repository.todos, selectedFilter, selectedSort, _selectedDate, visibleMonth
     ) { todos, filter, sort, date, month ->
         val dateTodos = todos.filter { it.scheduledDate == date }
-        val datesWithTodos = todos.map { it.scheduledDate }.toSet()
         val today = todayStartOfDayMillis()
+        val datesWithTodos = todos.map { it.scheduledDate }.toSet()
         val overdueDates = todos
             .asSequence()
             .filter { !it.isCompleted && it.scheduledDate < today }
@@ -134,11 +137,24 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             selectedSort = sort,
             selectedPriorityFilter = TodoPriorityFilter.ALL,
             selectedDate = date,
+            todayFocusMode = false,
             visibleMonth = month,
             datesWithTodos = datesWithTodos,
             overdueDates = overdueDates,
             completedOnlyDates = completedOnlyDates
         )
+    }.combine(_todayFocusMode) { base, todayFocusMode ->
+        if (!todayFocusMode) {
+            base.copy(todayFocusMode = false)
+        } else {
+            val today = todayStartOfDayMillis()
+            val todayActiveTodos = base.allTodos.filter { it.scheduledDate == today && !it.isCompleted }
+            base.copy(
+                statusFilteredDateTodos = todayActiveTodos,
+                priorityFilteredDateTodos = todayActiveTodos,
+                todayFocusMode = true
+            )
+        }
     }.combine(_selectedPriorityFilter) { base, priorityFilter ->
         val priorityFilteredDate = when (priorityFilter) {
             TodoPriorityFilter.ALL -> base.statusFilteredDateTodos
@@ -209,6 +225,7 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
             activeCount = base.dateTodos.count { !it.isCompleted },
             completedCount = base.dateTodos.count { it.isCompleted },
             selectedDate = base.selectedDate,
+            todayFocusMode = base.todayFocusMode,
             visibleMonth = base.visibleMonth,
             datesWithTodos = base.datesWithTodos,
             overdueDates = base.overdueDates,
@@ -248,6 +265,17 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
     fun setSort(sort: TodoSort) {
         selectedSort.value = sort
         preferences.saveSort(sort)
+    }
+
+    fun setTodayFocusMode(enabled: Boolean) {
+        _todayFocusMode.value = enabled
+        if (enabled) {
+            goToToday()
+        }
+    }
+
+    fun toggleTodayFocusMode() {
+        setTodayFocusMode(!_todayFocusMode.value)
     }
 
     fun resetSearchFilters() {
