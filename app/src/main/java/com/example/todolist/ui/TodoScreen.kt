@@ -1,5 +1,7 @@
 package com.example.todolist.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -142,10 +144,37 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
     var selectedTab by rememberSaveable { mutableStateOf(preferences.getMainTab()) }
     var showAppInfoDialog by remember { mutableStateOf(false) }
+    var pendingBackupJson by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val quickAddSuccessMessage = stringResource(R.string.quick_add_today_success)
+    val backupSuccessMessage = stringResource(R.string.backup_export_success)
+    val backupFailureMessage = stringResource(R.string.backup_export_failure)
     val settingsContentDescription = stringResource(R.string.app_info_menu)
+    val createBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        val backupJson = pendingBackupJson
+        if (uri == null || backupJson == null) {
+            pendingBackupJson = null
+            return@rememberLauncherForActivityResult
+        }
+
+        scope.launch {
+            runCatching {
+                val outputStream = context.contentResolver.openOutputStream(uri)
+                    ?: error("Failed to open output stream")
+                outputStream.bufferedWriter(Charsets.UTF_8).use { writer ->
+                    writer.write(backupJson)
+                }
+            }.onSuccess {
+                snackbarHostState.showSnackbar(backupSuccessMessage)
+            }.onFailure {
+                snackbarHostState.showSnackbar(backupFailureMessage)
+            }
+            pendingBackupJson = null
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -311,7 +340,23 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     }
 
     if (showAppInfoDialog) {
-        AppInfoDialog(onDismiss = { showAppInfoDialog = false })
+        AppInfoDialog(
+            onDismiss = { showAppInfoDialog = false },
+            onExportBackup = {
+                showAppInfoDialog = false
+                viewModel.createBackupJsonData(
+                    onSuccess = { fileName, json ->
+                        pendingBackupJson = json
+                        createBackupLauncher.launch(fileName)
+                    },
+                    onError = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(backupFailureMessage)
+                        }
+                    }
+                )
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -394,7 +439,7 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
 }
 
 @Composable
-private fun AppInfoDialog(onDismiss: () -> Unit) {
+private fun AppInfoDialog(onDismiss: () -> Unit, onExportBackup: () -> Unit) {
     val context = LocalContext.current
     val devBuildLabel = stringResource(R.string.app_info_dev_build)
     val versionName = remember(context, devBuildLabel) {
@@ -436,6 +481,11 @@ private fun AppInfoDialog(onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("닫기")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onExportBackup) {
+                Text(stringResource(R.string.backup_export_button))
             }
         }
     )

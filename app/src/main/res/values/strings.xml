@@ -24,6 +24,9 @@
     <string name="move_overdue_snackbar">지난 일정 %1$d개를 오늘로 이동했습니다.</string>
     <string name="todo_completed_snackbar">완료 처리했습니다.</string>
     <string name="todo_completed_undo_action">되돌리기</string>
+    <string name="backup_export_button">데이터 백업 내보내기</string>
+    <string name="backup_export_success">백업 파일을 생성했습니다.</string>
+    <string name="backup_export_failure">백업 파일 생성에 실패했습니다.</string>
     <string name="calendar_accessibility_today">오늘</string>
     <string name="calendar_accessibility_selected">선택됨</string>
     <string name="calendar_accessibility_has_todo">할 일 있음</string>
