@@ -47,10 +47,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -129,10 +131,24 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
     var addingTodoRepeatType by remember { mutableStateOf(0) }
     var selectedDetailTodo by remember { mutableStateOf<TodoEntity?>(null) }
     var selectedTab by rememberSaveable { mutableStateOf(preferences.getMainTab()) }
+    var showAppInfoDialog by remember { mutableStateOf(false) }
+    val settingsContentDescription = stringResource(R.string.app_info_menu)
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.app_name)) })
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = { showAppInfoDialog = true }) {
+                        Text(
+                            text = "⚙",
+                            modifier = Modifier.semantics {
+                                contentDescription = settingsContentDescription
+                            }
+                        )
+                    }
+                }
+            )
         },
         floatingActionButton = {
             if (selectedTab == TodoMainTab.TODO) {
@@ -264,6 +280,10 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
         }
     }
 
+    if (showAppInfoDialog) {
+        AppInfoDialog(onDismiss = { showAppInfoDialog = false })
+    }
+
     if (showAddDialog) {
         TodoEditDialog(
             title = "할 일 추가",
@@ -339,6 +359,70 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
                 editingTodoPriority = 1
                 editingTodoRepeatType = 0
             }
+        )
+    }
+}
+
+@Composable
+private fun AppInfoDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val devBuildLabel = stringResource(R.string.app_info_dev_build)
+    val versionName = remember(context, devBuildLabel) {
+        val resolvedVersion = runCatching {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull()
+
+        if (resolvedVersion.isNullOrBlank()) devBuildLabel else resolvedVersion
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.app_info_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppInfoRow(
+                    label = stringResource(R.string.app_info_app_name_label),
+                    value = stringResource(R.string.app_name)
+                )
+                AppInfoRow(
+                    label = stringResource(R.string.app_info_description_label),
+                    value = stringResource(R.string.app_info_description)
+                )
+                AppInfoRow(
+                    label = stringResource(R.string.app_info_version_label),
+                    value = versionName
+                )
+                AppInfoRow(
+                    label = stringResource(R.string.app_info_data_label),
+                    value = stringResource(R.string.app_info_data_storage)
+                )
+                AppInfoRow(
+                    label = stringResource(R.string.app_info_status_label),
+                    value = stringResource(R.string.app_info_dev_status)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("닫기")
+            }
+        }
+    )
+}
+
+@Composable
+private fun AppInfoRow(label: String, value: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
