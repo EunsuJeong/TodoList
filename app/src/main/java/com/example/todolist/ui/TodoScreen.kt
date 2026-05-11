@@ -257,6 +257,7 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
             TodoMainTab.TODO -> TodoListTabContent(
                 uiState = uiState,
                 viewModel = viewModel,
+                onToggleTodayFocus = { viewModel.toggleTodayFocusMode() },
                 onQuickAddSuccess = {
                     scope.launch {
                         snackbarHostState.showSnackbar(quickAddSuccessMessage)
@@ -449,6 +450,7 @@ private fun AppInfoRow(label: String, value: String) {
 private fun TodoListTabContent(
     uiState: TodoUiState,
     viewModel: TodoViewModel,
+    onToggleTodayFocus: () -> Unit,
     onQuickAddSuccess: () -> Unit,
     onViewDetail: (TodoEntity) -> Unit,
     modifier: Modifier = Modifier
@@ -507,6 +509,22 @@ private fun TodoListTabContent(
                     enabled = quickAddInput.trim().isNotEmpty()
                 ) {
                     Text("+")
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(onClick = onToggleTodayFocus) {
+                        Text(
+                            if (uiState.todayFocusMode) {
+                                stringResource(R.string.today_focus_on)
+                            } else {
+                                stringResource(R.string.today_focus_off)
+                            }
+                        )
+                    }
                 }
             }
         }
