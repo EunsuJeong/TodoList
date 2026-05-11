@@ -12,6 +12,9 @@ import com.example.todolist.data.local.previousMonthMillis
 import com.example.todolist.data.local.todayStartOfDayMillis
 import com.example.todolist.data.preferences.TodoViewPreferences
 import com.example.todolist.data.repository.TodoRepository
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +24,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 
 enum class TodoFilter {
     ALL,
@@ -405,6 +410,53 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
 
             goToToday()
             onComplete(overdueTodos.size)
+        }
+    }
+
+    fun createBackupJsonData(
+        onSuccess: (fileName: String, json: String) -> Unit,
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            runCatching {
+                val now = System.currentTimeMillis()
+                val timestampForFile = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date(now))
+                val generatedAtText = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(now))
+                val todos = repository.todos.first()
+
+                val todosJson = JSONArray().apply {
+                    todos.forEach { todo ->
+                        put(
+                            JSONObject().apply {
+                                put("id", todo.id)
+                                put("title", todo.title)
+                                put("memo", todo.memo)
+                                put("scheduledDate", todo.scheduledDate)
+                                put("isCompleted", todo.isCompleted)
+                                put("priority", todo.priority)
+                                put("repeatType", todo.repeatType)
+                                put("createdAt", todo.createdAt)
+                                put("updatedAt", todo.updatedAt)
+                            }
+                        )
+                    }
+                }
+
+                val backupJson = JSONObject().apply {
+                    put("appName", "TTdoList")
+                    put("backupVersion", 1)
+                    put("generatedAt", now)
+                    put("generatedAtText", generatedAtText)
+                    put("todos", todosJson)
+                }
+
+                val fileName = "TTdoList_backup_${timestampForFile}.json"
+                fileName to backupJson.toString(2)
+            }.onSuccess { (fileName, json) ->
+                onSuccess(fileName, json)
+            }.onFailure {
+                onError("백업 데이터를 생성하지 못했습니다.")
+            }
         }
     }
 }
