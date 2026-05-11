@@ -298,6 +298,17 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         }
     }
 
+    fun addQuickTodayTodo(title: String) {
+        val trimmedTitle = title.trim()
+        if (trimmedTitle.isEmpty()) return
+
+        val today = todayStartOfDayMillis()
+        updateSelectedDate(today)
+        viewModelScope.launch {
+            repository.addTodo(trimmedTitle, today, null, 1, 0)
+        }
+    }
+
     fun toggleTodo(todo: TodoEntity) {
         viewModelScope.launch {
             repository.toggleTodo(todo)
