@@ -344,6 +344,12 @@ class TodoViewModel(private val repository: TodoRepository, private val preferen
         }
     }
 
+    fun undoCompleteTodo(todo: TodoEntity) {
+        viewModelScope.launch {
+            repository.updateTodo(todo.copy(isCompleted = false))
+        }
+    }
+
     fun updateTodo(todo: TodoEntity) {
         viewModelScope.launch {
             repository.updateTodo(todo)
