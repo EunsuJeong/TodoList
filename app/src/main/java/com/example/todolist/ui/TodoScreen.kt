@@ -520,10 +520,13 @@ private fun TodoListTabContent(
 ) {
     var showFilterSortSheet by remember { mutableStateOf(false) }
     var showMoveOverdueDialog by remember { mutableStateOf(false) }
+    var isCompletedCollapsed by rememberSaveable { mutableStateOf(true) }
     var quickAddInput by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val completedSnackbarMessage = stringResource(R.string.todo_completed_snackbar)
     val undoActionLabel = stringResource(R.string.todo_completed_undo_action)
+    val incompleteTodos = uiState.todos.filter { !it.isCompleted }
+    val completedTodos = uiState.todos.filter { it.isCompleted }
 
     fun submitQuickAdd() {
         val title = quickAddInput.trim()
@@ -692,7 +695,7 @@ private fun TodoListTabContent(
                 )
             }
         }
-        if (uiState.todos.isEmpty()) {
+        if (incompleteTodos.isEmpty() && completedTodos.isEmpty()) {
             TodoEmptyState(
                 searchQuery = "",
                 selectedFilter = uiState.selectedFilter,
@@ -703,7 +706,7 @@ private fun TodoListTabContent(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(items = uiState.todos, key = { it.id }) { todo ->
+                items(items = incompleteTodos, key = { it.id }) { todo ->
                     TodoRow(
                         todo = todo,
                         onToggle = {
@@ -723,6 +726,38 @@ private fun TodoListTabContent(
                         },
                         onViewDetail = { onViewDetail(todo) }
                     )
+                }
+                if (completedTodos.isNotEmpty()) {
+                    item(key = "completed_header") {
+                        CompletedTodoHeader(
+                            count = completedTodos.size,
+                            collapsed = isCompletedCollapsed,
+                            onToggle = { isCompletedCollapsed = !isCompletedCollapsed }
+                        )
+                    }
+                }
+                if (!isCompletedCollapsed) {
+                    items(items = completedTodos, key = { it.id }) { todo ->
+                        TodoRow(
+                            todo = todo,
+                            onToggle = {
+                                val wasActive = !todo.isCompleted
+                                viewModel.toggleTodo(todo)
+                                if (wasActive) {
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = completedSnackbarMessage,
+                                            actionLabel = undoActionLabel
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel.undoCompleteTodo(todo)
+                                        }
+                                    }
+                                }
+                            },
+                            onViewDetail = { onViewDetail(todo) }
+                        )
+                    }
                 }
             }
         }
@@ -769,6 +804,35 @@ private fun TodoListTabContent(
                     Text(stringResource(R.string.move_overdue_confirm))
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun CompletedTodoHeader(
+    count: Int,
+    collapsed: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "완료된 할 일 ${count}개",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (collapsed) "▼" else "▲",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
