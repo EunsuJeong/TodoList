@@ -894,8 +894,8 @@ private fun FilterSortBottomSheet(
                     .padding(top = 4.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onReset) { Text("초기화") }
-                TextButton(onClick = onDone) { Text("완료") }
+                TextButton(onClick = onReset, modifier = Modifier.heightIn(min = 44.dp)) { Text("초기화") }
+                TextButton(onClick = onDone, modifier = Modifier.heightIn(min = 44.dp)) { Text("완료") }
             }
         }
 
@@ -1011,6 +1011,7 @@ private fun SelectionDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
                             .clickable { onSelect(text) }
+                            .heightIn(min = 44.dp)
                             .padding(horizontal = 4.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -1026,7 +1027,7 @@ private fun SelectionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("닫기") }
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) { Text("닫기") }
         }
     )
 }
@@ -1046,6 +1047,7 @@ private fun RepeatOptionRow(
             OutlinedButton(
                 onClick = { onRepeatTypeChange(value) },
                 shape = RoundedCornerShape(6.dp),
+                modifier = Modifier.heightIn(min = 44.dp),
                 colors = if (repeatType == value)
                     ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 else
@@ -1073,9 +1075,9 @@ private fun CalendarTabContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = { viewModel.goToPreviousMonth() }) { Text("◀") }
+            TextButton(onClick = { viewModel.goToPreviousMonth() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("◀") }
             Text(text = formatMonth(uiState.visibleMonth), style = MaterialTheme.typography.titleMedium)
-            TextButton(onClick = { viewModel.goToNextMonth() }) { Text("▶") }
+            TextButton(onClick = { viewModel.goToNextMonth() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("▶") }
         }
         Row(
             modifier = Modifier
@@ -1083,7 +1085,7 @@ private fun CalendarTabContent(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            OutlinedButton(onClick = onGoToToday) { Text("오늘") }
+            OutlinedButton(onClick = onGoToToday, modifier = Modifier.heightIn(min = 44.dp)) { Text("오늘") }
         }
         MonthlyCalendar(
             visibleMonth = uiState.visibleMonth,
@@ -1277,7 +1279,7 @@ private fun SearchTabContent(
                 placeholder = { Text("제목 또는 메모 검색") }
             )
             if (uiState.searchQuery.isNotEmpty()) {
-                TextButton(onClick = { viewModel.clearSearchQuery() }) { Text("✕") }
+                TextButton(onClick = { viewModel.clearSearchQuery() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("✕") }
             }
         }
         val conditionSummary = "${filterLabel(uiState.selectedFilter)} · ${priorityFilterLabel(uiState.selectedPriorityFilter)} · ${sortLabel(uiState.selectedSort)}"
@@ -1582,7 +1584,9 @@ private fun TodoEmptyState(
             if (onResetFilters != null) {
                 OutlinedButton(
                     onClick = onResetFilters,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .heightIn(min = 44.dp)
                 ) {
                     Text(
                         text = "필터 초기화",
@@ -1803,7 +1807,9 @@ private fun TodoEditDialog(
                     listOf(0 to "낮음", 1 to "보통", 2 to "높음").forEach { (value, label) ->
                         OutlinedButton(
                             onClick = { priority = value },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 44.dp),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(label, fontSize = 12.sp)
@@ -1886,7 +1892,9 @@ private fun TodoUpdateDialog(
                     listOf(0 to "낮음", 1 to "보통", 2 to "높음").forEach { (value, label) ->
                         OutlinedButton(
                             onClick = { priority = value },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 44.dp),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(label, fontSize = 12.sp)
@@ -1912,19 +1920,25 @@ private fun TodoUpdateDialog(
                 ) {
                     OutlinedButton(
                         onClick = { scheduledDate = previousDayMillis(scheduledDate) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 44.dp)
                     ) {
                         Text("이전날")
                     }
                     OutlinedButton(
                         onClick = { scheduledDate = todayStartOfDayMillis() },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 44.dp)
                     ) {
                         Text("오늘")
                     }
                     OutlinedButton(
                         onClick = { scheduledDate = nextDayMillis(scheduledDate) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 44.dp)
                     ) {
                         Text("다음날")
                     }
@@ -2000,7 +2014,7 @@ private fun TodoDetailDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onEdit) {
+            Button(onClick = onEdit, modifier = Modifier.heightIn(min = 44.dp)) {
                 Text("수정")
             }
         },
@@ -2009,10 +2023,10 @@ private fun TodoDetailDialog(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
                     Text("닫기")
                 }
-                TextButton(onClick = onDelete) {
+                TextButton(onClick = onDelete, modifier = Modifier.heightIn(min = 44.dp)) {
                     Text(
                         text = "삭제",
                         color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
