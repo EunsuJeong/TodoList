@@ -1832,13 +1832,14 @@ private fun TodoEditDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(text, memo, priority, repeatType) },
-                enabled = text.isNotBlank()
+                enabled = text.isNotBlank(),
+                modifier = Modifier.heightIn(min = 44.dp)
             ) {
                 Text("저장")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
                 Text("취소")
             }
         }
@@ -1950,13 +1951,14 @@ private fun TodoUpdateDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(text, scheduledDate, memo, priority, repeatType) },
-                enabled = text.isNotBlank()
+                enabled = text.isNotBlank(),
+                modifier = Modifier.heightIn(min = 44.dp)
             ) {
                 Text("저장")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
                 Text("취소")
             }
         }
