@@ -603,7 +603,8 @@ private fun TodoListTabContent(
             )
             OutlinedButton(
                 onClick = onToggleTodayFocus,
-                modifier = Modifier.heightIn(min = 44.dp)
+                modifier = Modifier.heightIn(min = 44.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
             ) {
                 Text(
                     if (uiState.todayFocusMode) {
@@ -623,17 +624,20 @@ private fun TodoListTabContent(
             TodoFilterButton(
                 text = "전체",
                 selected = uiState.selectedFilter == TodoFilter.ALL,
-                onClick = { viewModel.setFilter(TodoFilter.ALL) }
+                onClick = { viewModel.setFilter(TodoFilter.ALL) },
+                modifier = Modifier.weight(1f)
             )
             TodoFilterButton(
                 text = "진행중",
                 selected = uiState.selectedFilter == TodoFilter.ACTIVE,
-                onClick = { viewModel.setFilter(TodoFilter.ACTIVE) }
+                onClick = { viewModel.setFilter(TodoFilter.ACTIVE) },
+                modifier = Modifier.weight(1f)
             )
             TodoFilterButton(
                 text = "완료",
                 selected = uiState.selectedFilter == TodoFilter.COMPLETED,
-                onClick = { viewModel.setFilter(TodoFilter.COMPLETED) }
+                onClick = { viewModel.setFilter(TodoFilter.COMPLETED) },
+                modifier = Modifier.weight(1f)
             )
         }
         Card(
@@ -669,7 +673,10 @@ private fun TodoListTabContent(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                OutlinedButton(onClick = { showFilterSortSheet = true }) {
+                OutlinedButton(
+                    onClick = { showFilterSortSheet = true },
+                    modifier = Modifier.heightIn(min = 44.dp)
+                ) {
                     Text("변경")
                 }
             }
