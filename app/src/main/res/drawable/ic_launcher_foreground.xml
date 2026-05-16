@@ -5,54 +5,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- T-Day 로고: 따뜨한 체크마크 + 해 -->
+    <!-- T-Day 로고: "T" + 체크마크 -->
 
-    <!-- 배경 서클 (따뜨한 흰색) 원형 -->
+    <!-- 배경 서클 (따뜨한 흰색) -->
     <path
         android:fillColor="#FFFBF5"
         android:pathData="M54,0 C83.8,0 108,24.2 108,54 C108,83.8 83.8,108 54,108 C24.2,108 0,83.8 0,54 C0,24.2 24.2,0 54,0 Z" />
 
-    <!-- 태양 (노랑) 원형 -->
-    <path
-        android:fillColor="#FFB84D"
-        android:pathData="M38,20 C43.5,20 48,24.5 48,30 C48,35.5 43.5,40 38,40 C32.5,40 28,35.5 28,30 C28,24.5 32.5,20 38,20 Z" />
-
-    <!-- 태양 광선 1 (위) -->
-    <path
-        android:strokeColor="#FFB84D"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M38,10 L38,5" />
-
-    <!-- 태양 광선 2 (우상향) -->
-    <path
-        android:strokeColor="#FFB84D"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M50,20 L54,16" />
-
-    <!-- 태양 광선 3 (우측) -->
-    <path
-        android:strokeColor="#FFB84D"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M56,30 L62,30" />
-
-    <!-- 체크마크 배경 서클 (주황) -->
+    <!-- 큰 "T" 글자 (주황색) -->
     <path
         android:fillColor="#FF9500"
-        android:pathData="M54,42 C73.3,42 88,56.7 88,76 C88,95.3 73.3,110 54,110 C34.7,110 20,95.3 20,76 C20,56.7 34.7,42 54,42 Z" />
+        android:pathData="M28,20 L68,20 L68,28 L52,28 L52,60 L42,60 L42,28 L28,28 Z" />
 
-    <!-- 체크마크 (흰색) -->
+    <!-- 체크마크 (초록색) - 우측 하단 -->
     <path
-        android:strokeColor="#FFFFFF"
+        android:strokeColor="#51CF66"
         android:strokeWidth="4.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:fillColor="@android:color/transparent"
-        android:pathData="M45,75 L53,85 L68,63" />
+        android:pathData="M52,75 L62,88 L84,66" />
 
 </vector>
