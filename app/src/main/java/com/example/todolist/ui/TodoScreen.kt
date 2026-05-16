@@ -64,6 +64,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.role
@@ -1127,57 +1129,130 @@ private fun TodaySummaryCard(
     onMoveOverdueClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    // T-Day Hero Card - Warm Gradient
+    val TTodayYellow = Color(0xFFFFB84D)
+    val TTodayOrange = Color(0xFFFF9500)
+    val TCompletedGreen = Color(0xFF51CF66)
+    
     Card(
         onClick = onClick,
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = Color.Transparent
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(TTodayYellow, TTodayOrange),
+                        start = Offset(0f, 0f),
+                        end = Offset(1000f, 200f)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
         ) {
-            Text(
-                text = "오늘 진행중 ${todayActiveCount}개 · 완료 ${todayCompletedCount}개",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (overdueActiveCount > 0) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 오늘 진행상황
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f))
-                        .then(
-                            if (onOverdueClick != null) Modifier.clickable(onClick = onOverdueClick)
-                            else Modifier
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
+                    Column {
                         Text(
-                            text = "⚠️ 지난 일정 ${overdueActiveCount}개",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
+                            text = "오늘의 할 일",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 12.sp
                         )
-                    }
-
-                    if (onMoveOverdueClick != null) {
-                        OutlinedButton(
-                            onClick = onMoveOverdueClick,
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            modifier = Modifier.heightIn(min = 44.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.move_overdue_action),
-                                style = MaterialTheme.typography.labelMedium
+                                text = "${todayActiveCount}개",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
                             )
+                            Text(
+                                text = "진행중",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                    
+                    // 완료 배지
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = TCompletedGreen.copy(alpha = 0.9f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "✓ ${todayCompletedCount}개",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                
+                // 지난 일정 경고
+                if (overdueActiveCount > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White.copy(alpha = 0.25f))
+                                .then(
+                                    if (onOverdueClick != null) Modifier.clickable(onClick = onOverdueClick)
+                                    else Modifier
+                                )
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "⚠️ 지난 일정 ${overdueActiveCount}개",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        if (onMoveOverdueClick != null) {
+                            Button(
+                                onClick = onMoveOverdueClick,
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = TTodayOrange
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                modifier = Modifier.heightIn(min = 44.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.move_overdue_action),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -1641,26 +1716,42 @@ private fun priorityColor(priority: Int, colorScheme: androidx.compose.material3
 
 @Composable
 private fun PriorityLabel(priority: Int) {
-    val label = priorityLabel(priority)
-    val backgroundColor = when (priority) {
-        0 -> MaterialTheme.colorScheme.secondaryContainer
-        1 -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.errorContainer
+    // T-Day Concept Colors
+    val TPriorityHigh = Color(0xFFFF6B6B)    // 높음 - 빨강
+    val TPriorityNormal = Color(0xFFFFB84D)  // 보통 - 황금
+    val TPriorityLow = Color(0xFF51CF66)     // 낮음 - 초록
+    
+    val (icon, label, backgroundColor) = when (priority) {
+        0 -> Triple("🟢", "낮음", TPriorityLow.copy(alpha = 0.15f))
+        1 -> Triple("🟡", "보통", TPriorityNormal.copy(alpha = 0.15f))
+        else -> Triple("🔴", "높음", TPriorityHigh.copy(alpha = 0.15f))
     }
+    
     val textColor = when (priority) {
-        0 -> MaterialTheme.colorScheme.onSecondaryContainer
-        1 -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onErrorContainer
+        0 -> TPriorityLow
+        1 -> TPriorityNormal
+        else -> TPriorityHigh
     }
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        color = textColor,
+    
+    Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
-            .padding(horizontal = 6.dp, vertical = 3.dp)
-    )
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Text(
+            text = icon,
+            fontSize = 10.sp
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }
 
 @Composable
@@ -1688,14 +1779,16 @@ private fun TodoRow(
     onViewDetail: () -> Unit,
     showScheduledDate: Boolean = false
 ) {
-    val contentAlpha = if (todo.isCompleted) 0.5f else 1f
+    val TCompletedGreen = Color(0xFF51CF66)
+    val contentAlpha = if (todo.isCompleted) 0.6f else 1f
     val isOverdue = !todo.isCompleted && todo.scheduledDate < todayStartOfDayMillis()
     val overdueColor = MaterialTheme.colorScheme.error
-    val cardContainerColor = if (isOverdue) {
-        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-    } else {
-        MaterialTheme.colorScheme.surface
+    val cardContainerColor = when {
+        todo.isCompleted -> TCompletedGreen.copy(alpha = 0.12f)  // 완료 - 초록색 배경
+        isOverdue -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        else -> MaterialTheme.colorScheme.surface
     }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),

@@ -13,6 +13,7 @@ import com.example.todolist.data.repository.TodoRepository
 import com.example.todolist.ui.TodoScreen
 import com.example.todolist.ui.TodoViewModel
 import com.example.todolist.ui.TodoViewModelFactory
+import com.example.todolist.ui.TTdoListTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
                 factory = TodoViewModelFactory(repository, preferences)
             )
 
-            MaterialTheme {
+            TTdoListTheme {
                 Surface {
                     TodoScreen(viewModel = viewModel, preferences = preferences)
                 }
