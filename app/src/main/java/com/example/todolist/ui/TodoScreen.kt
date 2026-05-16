@@ -2,6 +2,7 @@ package com.example.todolist.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -537,6 +538,7 @@ private fun TodoListTabContent(
     val undoActionLabel = stringResource(R.string.todo_completed_undo_action)
     val incompleteTodos = uiState.todos.filter { !it.isCompleted }
     val completedTodos = uiState.todos.filter { it.isCompleted }
+    val TTodayOrange = Color(0xFFFF9500)
 
     fun submitQuickAdd() {
         val title = quickAddInput.trim()
@@ -647,14 +649,24 @@ private fun TodoListTabContent(
             OutlinedButton(
                 onClick = onToggleTodayFocus,
                 modifier = Modifier.heightIn(min = 44.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (uiState.todayFocusMode) TTodayOrange else Color(0xFFFFF4E6),
+                    contentColor = if (uiState.todayFocusMode) Color.White else TTodayOrange
+                ),
+                border = BorderStroke(
+                    width = 1.5.dp,
+                    color = if (uiState.todayFocusMode) TTodayOrange else TTodayOrange.copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     if (uiState.todayFocusMode) {
                         stringResource(R.string.today_focus_on)
                     } else {
                         stringResource(R.string.today_focus_off)
-                    }
+                    },
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -718,9 +730,15 @@ private fun TodoListTabContent(
                 }
                 OutlinedButton(
                     onClick = { showFilterSortSheet = true },
-                    modifier = Modifier.heightIn(min = 44.dp)
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFFFFF4E6),
+                        contentColor = TTodayOrange
+                    ),
+                    border = BorderStroke(1.5.dp, TTodayOrange.copy(alpha = 0.3f)),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("변경")
+                    Text("변경", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
