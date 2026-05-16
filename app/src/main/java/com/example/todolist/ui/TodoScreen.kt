@@ -1129,6 +1129,9 @@ private fun CalendarTabContent(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
+        // T-Day 색상
+        val TTodayOrange = Color(0xFFFF9500)
+        
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1136,9 +1139,31 @@ private fun CalendarTabContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = { viewModel.goToPreviousMonth() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("◀") }
+            Button(
+                onClick = { viewModel.goToPreviousMonth() },
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TTodayOrange,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp)
+            ) {
+                Text("◀", fontWeight = FontWeight.SemiBold)
+            }
             Text(text = formatMonth(uiState.visibleMonth), style = MaterialTheme.typography.titleMedium)
-            TextButton(onClick = { viewModel.goToNextMonth() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("▶") }
+            Button(
+                onClick = { viewModel.goToNextMonth() },
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TTodayOrange,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp)
+            ) {
+                Text("▶", fontWeight = FontWeight.SemiBold)
+            }
         }
         Row(
             modifier = Modifier
@@ -1146,7 +1171,17 @@ private fun CalendarTabContent(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            OutlinedButton(onClick = onGoToToday, modifier = Modifier.heightIn(min = 44.dp)) { Text("오늘") }
+            Button(
+                onClick = onGoToToday,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TTodayOrange,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("오늘", fontWeight = FontWeight.SemiBold)
+            }
         }
         MonthlyCalendar(
             visibleMonth = uiState.visibleMonth,
@@ -1569,15 +1604,20 @@ private fun CalendarDayCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // T-Day 색상
+    val TTodayOrange = Color(0xFFFF9500)
+    val TCompletedGreen = Color(0xFF51CF66)
+    val TTodayRed = Color(0xFFFF6B6B)
+    
     // 배경: 선택 날짜
     val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
+        TTodayOrange
     } else {
         Color.Transparent
     }
     // 테두리: 오늘이면서 선택되지 않은 경우만 표시
     val borderColor = if (isToday && !isSelected) {
-        MaterialTheme.colorScheme.primary
+        TTodayOrange
     } else {
         Color.Transparent
     }
@@ -1588,22 +1628,22 @@ private fun CalendarDayCell(
         else -> MaterialTheme.colorScheme.onSurface
     }
     val textColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        Color.White
     } else {
         baseTextColor
     }
     // 점 색상 (overdue 우선, 그 다음 완료만 있는 날짜 구분)
     val dotColor = when {
-        hasOverdueTodo -> MaterialTheme.colorScheme.error
+        hasOverdueTodo -> TTodayRed // T-Day 빨강
         isCompletedOnly -> if (isSelected) {
-            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f)
+            Color.White.copy(alpha = 0.7f)
         } else {
-            MaterialTheme.colorScheme.outline
+            TCompletedGreen // T-Day 초록
         }
         else -> if (isSelected) {
-            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            Color.White.copy(alpha = 0.7f)
         } else {
-            MaterialTheme.colorScheme.primary
+            TTodayOrange // T-Day 주황
         }
     }
     val todayLabel = stringResource(id = R.string.calendar_accessibility_today)
