@@ -572,8 +572,9 @@ private fun TodoListTabContent(
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+                containerColor = Color(0xFFFFE8B6).copy(alpha = 0.6f) // T-Day 따뜻한 황색
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -585,7 +586,10 @@ private fun TodoListTabContent(
                 OutlinedTextField(
                     value = quickAddInput,
                     onValueChange = { quickAddInput = it },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 44.dp)
+                        .background(color = Color(0xFFFFFBF5), shape = RoundedCornerShape(4.dp)),
                     singleLine = true,
                     placeholder = { Text(stringResource(R.string.quick_add_today_placeholder)) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -594,9 +598,14 @@ private fun TodoListTabContent(
                 Button(
                     onClick = { submitQuickAdd() },
                     enabled = quickAddInput.trim().isNotEmpty(),
-                    modifier = Modifier.heightIn(min = 44.dp)
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF9500), // T-Day 주황
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("추가")
+                    Text("추가", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
