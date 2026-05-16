@@ -529,6 +529,22 @@ private fun TodoListTabContent(
         onQuickAddSuccess()
     }
 
+    fun handleTodoToggle(todo: TodoEntity) {
+        val wasActive = !todo.isCompleted
+        viewModel.toggleTodo(todo)
+        if (wasActive) {
+            scope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = completedSnackbarMessage,
+                    actionLabel = undoActionLabel
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    viewModel.undoCompleteTodo(todo)
+                }
+            }
+        }
+    }
+
     Column(modifier = modifier) {
         TodaySummaryCard(
             todayActiveCount = uiState.todayActiveCount,
@@ -707,21 +723,7 @@ private fun TodoListTabContent(
                 items(items = incompleteTodos, key = { it.id }) { todo ->
                     TodoRow(
                         todo = todo,
-                        onToggle = {
-                            val wasActive = !todo.isCompleted
-                            viewModel.toggleTodo(todo)
-                            if (wasActive) {
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = completedSnackbarMessage,
-                                        actionLabel = undoActionLabel
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.undoCompleteTodo(todo)
-                                    }
-                                }
-                            }
-                        },
+                        onToggle = { handleTodoToggle(todo) },
                         onViewDetail = { onViewDetail(todo) }
                     )
                 }
@@ -738,21 +740,7 @@ private fun TodoListTabContent(
                     items(items = completedTodos, key = { it.id }) { todo ->
                         TodoRow(
                             todo = todo,
-                            onToggle = {
-                                val wasActive = !todo.isCompleted
-                                viewModel.toggleTodo(todo)
-                                if (wasActive) {
-                                    scope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = completedSnackbarMessage,
-                                            actionLabel = undoActionLabel
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.undoCompleteTodo(todo)
-                                        }
-                                    }
-                                }
-                            },
+                            onToggle = { handleTodoToggle(todo) },
                             onViewDetail = { onViewDetail(todo) }
                         )
                     }
@@ -813,6 +801,7 @@ private fun CompletedTodoHeader(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val expandedStateText = if (collapsed) "접힘" else "펼침"
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -823,7 +812,11 @@ private fun CompletedTodoHeader(
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onToggle)
             .heightIn(min = 44.dp)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .semantics {
+                contentDescription = "완료된 할 일 ${count}개, ${expandedStateText}"
+                stateDescription = expandedStateText
+            },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
