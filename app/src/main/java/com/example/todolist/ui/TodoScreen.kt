@@ -1433,6 +1433,10 @@ private fun SearchTabContent(
     onViewDetail: (TodoEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // T-Day 색상
+    val TTodayOrange = Color(0xFFFF9500)
+    val TTodoWhite = Color(0xFFFFFBF5)
+    
     Column(modifier = modifier) {
         Row(
             modifier = Modifier
@@ -1449,7 +1453,18 @@ private fun SearchTabContent(
                 placeholder = { Text("제목 또는 메모 검색") }
             )
             if (uiState.searchQuery.isNotEmpty()) {
-                TextButton(onClick = { viewModel.clearSearchQuery() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("✕") }
+                Button(
+                    onClick = { viewModel.clearSearchQuery() },
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TTodayOrange,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    Text("✕", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
             }
         }
         val conditionSummary = "${filterLabel(uiState.selectedFilter)} · ${priorityFilterLabel(uiState.selectedPriorityFilter)} · ${sortLabel(uiState.selectedSort)}"
@@ -1757,15 +1772,21 @@ private fun TodoEmptyState(
                 )
             }
             if (onResetFilters != null) {
-                OutlinedButton(
+                Button(
                     onClick = onResetFilters,
                     modifier = Modifier
                         .padding(top = 4.dp)
-                        .heightIn(min = 44.dp)
+                        .heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF9500), // T-Day 주황
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
                         text = "필터 초기화",
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
