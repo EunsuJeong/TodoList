@@ -2,28 +2,56 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:viewportWidth="1000"
+    android:viewportHeight="1000">
 
-    <!-- T-Day 로고: "T" + 체크마크 -->
-
-    <!-- 배경 서클 (따뜨한 흰색) -->
+    <!-- 배경 (흰색) -->
     <path
-        android:fillColor="#FFFBF5"
-        android:pathData="M54,0 C83.8,0 108,24.2 108,54 C108,83.8 83.8,108 54,108 C24.2,108 0,83.8 0,54 C0,24.2 24.2,0 54,0 Z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M0,0 L1000,0 L1000,1000 L0,1000 Z" />
 
-    <!-- 큰 "T" 글자 (주황색) -->
+    <!-- 큰 T자 - 상단 검은색 가로줄 (스크래치 효과) -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M450,100 L950,100 L950,180 L450,180 Z" />
+
+    <!-- T자 - 왼쪽 검은색 수직선 -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M500,180 L650,180 L650,520 L500,520 Z" />
+
+    <!-- T자 - 오른쪽 주황색 수직선 -->
     <path
         android:fillColor="#FF9500"
-        android:pathData="M28,20 L68,20 L68,28 L52,28 L52,60 L42,60 L42,28 L28,28 Z" />
+        android:pathData="M650,180 L850,180 L850,520 L650,520 Z" />
 
-    <!-- 체크마크 (초록색) - 우측 하단 -->
+    <!-- 체크마크 (검은색) - T자 위에 겹침 -->
     <path
-        android:strokeColor="#51CF66"
-        android:strokeWidth="4.5"
+        android:strokeColor="#2C2C2C"
+        android:strokeWidth="40"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:fillColor="@android:color/transparent"
-        android:pathData="M52,75 L62,88 L84,66" />
+        android:pathData="M680,380 L760,460 L900,300" />
+
+    <!-- "TT" 텍스트 (주황색) -->
+    <path
+        android:fillColor="#FF9500"
+        android:pathData="M480,620 L520,620 L520,800 L480,800 Z M520,620 L560,620 L560,800 L520,800 Z" />
+
+    <!-- "do" 텍스트 (검은색) - 간단한 원형 표현 -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M600,620 L640,620 L640,800 L600,800 Z M640,620 C660,620 680,635 680,660 C680,685 660,700 640,700 C660,700 680,715 680,740 C680,765 660,800 640,800 C620,800 600,785 600,760 L600,640 C600,625 610,620 620,620" />
+
+    <!-- "List" 텍스트 (검은색) - 간단한 표현 -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M700,620 L740,620 L740,800 L700,800 Z M740,620 L780,620 L780,640 L750,640 Z M780,620 L820,620 L820,800 L780,800 Z M820,620 L860,620 L860,800 L820,800 Z" />
+
+    <!-- "TRY TODAY" 서브텍스트 (검은색) -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M480,820 L520,820 L520,900 L480,900 Z M540,820 L580,820 L580,900 L540,900 Z M600,820 L640,820 L640,900 L600,900 Z" />
 
 </vector>
