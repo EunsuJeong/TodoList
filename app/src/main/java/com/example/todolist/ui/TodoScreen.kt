@@ -944,7 +944,8 @@ private fun FilterSortBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
                     onClick = onReset,
@@ -957,6 +958,7 @@ private fun FilterSortBottomSheet(
                 ) {
                     Text("초기화", fontWeight = FontWeight.SemiBold)
                 }
+                Spacer(modifier = Modifier.size(8.dp))
                 Button(
                     onClick = onDone,
                     modifier = Modifier.heightIn(min = 44.dp),
@@ -1455,7 +1457,6 @@ private fun SearchTabContent(
 ) {
     // T-Day 색상
     val TTodayOrange = Color(0xFFFF9500)
-    val TTodoWhite = Color(0xFFFFFBF5)
     
     Column(modifier = modifier) {
         Row(
