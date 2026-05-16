@@ -195,13 +195,6 @@ fun TodoScreen(viewModel: TodoViewModel, preferences: TodoViewPreferences) {
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
-        floatingActionButton = {
-            if (selectedTab == TodoMainTab.TODO) {
-                FloatingActionButton(onClick = { showAddDialog = true }) {
-                    Text("+")
-                }
-            }
-        },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
@@ -566,7 +559,7 @@ private fun TodoListTabContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -583,23 +576,7 @@ private fun TodoListTabContent(
                     onClick = { submitQuickAdd() },
                     enabled = quickAddInput.trim().isNotEmpty()
                 ) {
-                    Text("+")
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    OutlinedButton(onClick = onToggleTodayFocus) {
-                        Text(
-                            if (uiState.todayFocusMode) {
-                                stringResource(R.string.today_focus_on)
-                            } else {
-                                stringResource(R.string.today_focus_off)
-                            }
-                        )
-                    }
+                    Text("추가")
                 }
             }
         }
@@ -615,13 +592,24 @@ private fun TodoListTabContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 4.dp)
+                .padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "진행 상태",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            OutlinedButton(onClick = onToggleTodayFocus) {
+                Text(
+                    if (uiState.todayFocusMode) {
+                        stringResource(R.string.today_focus_on)
+                    } else {
+                        stringResource(R.string.today_focus_off)
+                    }
+                )
+            }
         }
         Row(
             modifier = Modifier
