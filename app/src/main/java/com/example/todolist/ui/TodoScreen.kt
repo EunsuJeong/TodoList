@@ -66,8 +66,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -700,7 +702,9 @@ private fun TodoListTabContent(
         if (uiState.completedCount > 0) {
             TextButton(
                 onClick = { viewModel.clearCompletedTodos() },
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .heightIn(min = 44.dp)
             ) {
                 Text(
                     text = "완료 항목 삭제 (${uiState.completedCount})",
@@ -814,6 +818,7 @@ private fun CompletedTodoHeader(
             .heightIn(min = 44.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .semantics {
+                role = Role.Button
                 contentDescription = "완료된 할 일 ${count}개, ${expandedStateText}"
                 stateDescription = expandedStateText
             },
