@@ -32,7 +32,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -574,7 +573,8 @@ private fun TodoListTabContent(
                 )
                 Button(
                     onClick = { submitQuickAdd() },
-                    enabled = quickAddInput.trim().isNotEmpty()
+                    enabled = quickAddInput.trim().isNotEmpty(),
+                    modifier = Modifier.heightIn(min = 44.dp)
                 ) {
                     Text("추가")
                 }
@@ -601,7 +601,10 @@ private fun TodoListTabContent(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            OutlinedButton(onClick = onToggleTodayFocus) {
+            OutlinedButton(
+                onClick = onToggleTodayFocus,
+                modifier = Modifier.heightIn(min = 44.dp)
+            ) {
                 Text(
                     if (uiState.todayFocusMode) {
                         stringResource(R.string.today_focus_on)
@@ -806,8 +809,13 @@ private fun CompletedTodoHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                shape = RoundedCornerShape(10.dp)
+            )
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onToggle)
+            .heightIn(min = 44.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
