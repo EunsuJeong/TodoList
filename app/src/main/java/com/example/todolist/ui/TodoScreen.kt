@@ -776,7 +776,7 @@ private fun TodoListTabContent(
                 Text(stringResource(R.string.move_overdue_dialog_message, uiState.overdueActiveCount))
             },
             dismissButton = {
-                TextButton(onClick = { showMoveOverdueDialog = false }) {
+                TextButton(onClick = { showMoveOverdueDialog = false }, modifier = Modifier.heightIn(min = 44.dp)) {
                     Text(stringResource(R.string.move_overdue_cancel))
                 }
             },
@@ -789,7 +789,8 @@ private fun TodoListTabContent(
                                 onMoveOverdueComplete(movedCount)
                             }
                         }
-                    }
+                    },
+                    modifier = Modifier.heightIn(min = 44.dp)
                 ) {
                     Text(stringResource(R.string.move_overdue_confirm))
                 }
