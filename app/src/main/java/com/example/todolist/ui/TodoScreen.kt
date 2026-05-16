@@ -475,13 +475,27 @@ private fun AppInfoDialog(onDismiss: () -> Unit, onExportBackup: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
-                Text("닫기")
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9500), // T-Day 주황
+                    contentColor = Color.White
+                )
+            ) {
+                Text("닫기", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onExportBackup, modifier = Modifier.heightIn(min = 44.dp)) {
-                Text(stringResource(R.string.backup_export_button))
+            Button(
+                onClick = onExportBackup,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF51CF66), // T-Day 초록
+                    contentColor = Color.White
+                )
+            ) {
+                Text(stringResource(R.string.backup_export_button), fontWeight = FontWeight.SemiBold)
             }
         }
     )
@@ -787,12 +801,19 @@ private fun TodoListTabContent(
                 Text(stringResource(R.string.move_overdue_dialog_message, uiState.overdueActiveCount))
             },
             dismissButton = {
-                TextButton(onClick = { showMoveOverdueDialog = false }, modifier = Modifier.heightIn(min = 44.dp)) {
-                    Text(stringResource(R.string.move_overdue_cancel))
+                Button(
+                    onClick = { showMoveOverdueDialog = false },
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF9500), // T-Day 주황
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(stringResource(R.string.move_overdue_cancel), fontWeight = FontWeight.SemiBold)
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showMoveOverdueDialog = false
                         viewModel.moveOverdueTodosToToday { movedCount ->
@@ -801,9 +822,13 @@ private fun TodoListTabContent(
                             }
                         }
                     },
-                    modifier = Modifier.heightIn(min = 44.dp)
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF51CF66), // T-Day 초록
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text(stringResource(R.string.move_overdue_confirm))
+                    Text(stringResource(R.string.move_overdue_confirm), fontWeight = FontWeight.SemiBold)
                 }
             }
         )
@@ -1054,7 +1079,16 @@ private fun SelectionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) { Text("닫기") }
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9500), // T-Day 주황
+                    contentColor = Color.White
+                )
+            ) {
+                Text("닫기", fontWeight = FontWeight.SemiBold)
+            }
         }
     )
 }
@@ -1971,14 +2005,25 @@ private fun TodoEditDialog(
             Button(
                 onClick = { onConfirm(text, memo, priority, repeatType) },
                 enabled = text.isNotBlank(),
-                modifier = Modifier.heightIn(min = 44.dp)
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9500), // T-Day 주황
+                    contentColor = Color.White
+                )
             ) {
-                Text("저장")
+                Text("저장", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
-                Text("취소")
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF0F0F0), // 라이트 그레이
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("취소", fontWeight = FontWeight.SemiBold)
             }
         }
     )
@@ -2090,14 +2135,25 @@ private fun TodoUpdateDialog(
             Button(
                 onClick = { onConfirm(text, scheduledDate, memo, priority, repeatType) },
                 enabled = text.isNotBlank(),
-                modifier = Modifier.heightIn(min = 44.dp)
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9500), // T-Day 주황
+                    contentColor = Color.White
+                )
             ) {
-                Text("저장")
+                Text("저장", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
-                Text("취소")
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF0F0F0), // 라이트 그레이
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("취소", fontWeight = FontWeight.SemiBold)
             }
         }
     )
@@ -2156,8 +2212,15 @@ private fun TodoDetailDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onEdit, modifier = Modifier.heightIn(min = 44.dp)) {
-                Text("수정")
+            Button(
+                onClick = onEdit,
+                modifier = Modifier.heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9500), // T-Day 주황
+                    contentColor = Color.White
+                )
+            ) {
+                Text("수정", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -2165,14 +2228,25 @@ private fun TodoDetailDialog(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
-                    Text("닫기")
-                }
-                TextButton(onClick = onDelete, modifier = Modifier.heightIn(min = 44.dp)) {
-                    Text(
-                        text = "삭제",
-                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF0F0F0), // 라이트 그레이
+                        contentColor = Color.Black
                     )
+                ) {
+                    Text("닫기", fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = onDelete,
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF6B6B), // T-Day 빨강
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("삭제", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
