@@ -946,8 +946,28 @@ private fun FilterSortBottomSheet(
                     .padding(top = 4.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onReset, modifier = Modifier.heightIn(min = 44.dp)) { Text("초기화") }
-                TextButton(onClick = onDone, modifier = Modifier.heightIn(min = 44.dp)) { Text("완료") }
+                Button(
+                    onClick = onReset,
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF0F0F0),
+                        contentColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("초기화", fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = onDone,
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF9500),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("완료", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 
