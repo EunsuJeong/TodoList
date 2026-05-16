@@ -808,12 +808,15 @@ private fun CompletedTodoHeader(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // T-Day Concept Colors
+    val TCompletedGreen = Color(0xFF51CF66)
     val expandedStateText = if (collapsed) "접힘" else "펼침"
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                color = TCompletedGreen.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(10.dp)
             )
             .clip(RoundedCornerShape(10.dp))
@@ -828,15 +831,27 @@ private fun CompletedTodoHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = "완료된 할 일 ${count}개",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = "✓",
+                style = MaterialTheme.typography.labelLarge,
+                color = TCompletedGreen,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "완료된 할 일 ${count}개",
+                style = MaterialTheme.typography.labelLarge,
+                color = TCompletedGreen,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
         Text(
             text = if (collapsed) "▼" else "▲",
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TCompletedGreen
         )
     }
 }
@@ -1761,13 +1776,34 @@ private fun TodoFilterButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // T-Day Concept Colors
+    val TTodayOrange = Color(0xFFFF9500)
+    
     if (selected) {
-        Button(onClick = onClick, modifier = modifier.heightIn(min = 44.dp)) {
-            Text(text)
+        Button(
+            onClick = onClick,
+            modifier = modifier.heightIn(min = 44.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TTodayOrange,
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(text, fontWeight = FontWeight.SemiBold)
         }
     } else {
-        OutlinedButton(onClick = onClick, modifier = modifier.heightIn(min = 44.dp)) {
-            Text(text)
+        OutlinedButton(
+            onClick = onClick,
+            modifier = modifier
+                .heightIn(min = 44.dp)
+                .border(
+                    width = 1.5.dp,
+                    color = TTodayOrange.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(text, color = TTodayOrange)
         }
     }
 }
