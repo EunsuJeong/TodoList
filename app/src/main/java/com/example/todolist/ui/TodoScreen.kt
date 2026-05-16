@@ -473,12 +473,12 @@ private fun AppInfoDialog(onDismiss: () -> Unit, onExportBackup: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 44.dp)) {
                 Text("닫기")
             }
         },
         dismissButton = {
-            TextButton(onClick = onExportBackup) {
+            TextButton(onClick = onExportBackup, modifier = Modifier.heightIn(min = 44.dp)) {
                 Text(stringResource(R.string.backup_export_button))
             }
         }
@@ -1170,7 +1170,8 @@ private fun TodaySummaryCard(
                         OutlinedButton(
                             onClick = onMoveOverdueClick,
                             shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.heightIn(min = 44.dp)
                         ) {
                             Text(
                                 text = stringResource(R.string.move_overdue_action),
